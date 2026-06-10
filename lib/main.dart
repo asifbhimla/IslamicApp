@@ -10,9 +10,14 @@ Future<void> main() async {
 
   final appState = AppState();
   await appState.load();
-  await NotificationService.init();
-  await NotificationService.requestPermissions();
-  await NotificationService.rescheduleAthanNotifications(appState);
+  try {
+    await NotificationService.init();
+    await NotificationService.requestPermissions();
+    await NotificationService.rescheduleAthanNotifications(appState);
+  } catch (e, stack) {
+    // The app is fully usable without notifications; never block startup.
+    FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack));
+  }
 
   runApp(IslamicApp(appState: appState));
 }

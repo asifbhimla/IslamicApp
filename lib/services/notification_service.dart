@@ -44,6 +44,7 @@ class NotificationService {
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
+        linux: LinuxInitializationSettings(defaultActionName: 'Open'),
       ),
     );
   }
@@ -73,14 +74,20 @@ class NotificationService {
           state.prayerEntriesFor(date).where((e) => e.isObligatory);
       for (final entry in entries) {
         if (entry.time.isBefore(now)) continue;
-        await _plugin.zonedSchedule(
-          id: id++,
-          title: '${entry.name} prayer time',
-          body: "It's time for ${entry.name} in ${state.locationLabel}",
-          scheduledDate: tz.TZDateTime.from(entry.time, tz.local),
-          notificationDetails: _athanDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        );
+        try {
+          await _plugin.zonedSchedule(
+            id: id++,
+            title: '${entry.name} prayer time',
+            body: "It's time for ${entry.name} in ${state.locationLabel}",
+            scheduledDate: tz.TZDateTime.from(entry.time, tz.local),
+            notificationDetails: _athanDetails,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          );
+        } on UnimplementedError {
+          // Scheduled notifications are only supported on Android/iOS;
+          // desktop builds simply skip them.
+          return;
+        }
       }
     }
   }
