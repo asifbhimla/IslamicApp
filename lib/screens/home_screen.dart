@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 
 import '../app_state.dart';
+import '../services/daily_ayah_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Timer? _ticker;
+  DailyAyah? _dailyAyah;
 
   @override
   void initState() {
@@ -23,6 +25,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
+    _loadDailyAyah();
+  }
+
+  Future<void> _loadDailyAyah() async {
+    final ayah = await DailyAyahService.getToday();
+    if (mounted) setState(() => _dailyAyah = ayah);
   }
 
   @override
@@ -126,6 +134,44 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (_dailyAyah != null) ...[
+            Text('Ayah of the Day', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      _dailyAyah!.arabic,
+                      style: theme.textTheme.titleLarge?.copyWith(height: 2),
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _dailyAyah!.translation,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '— ${_dailyAyah!.surahName} ${_dailyAyah!.surahNumber}:${_dailyAyah!.verseNumber}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Text("Today's prayer times", style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(
