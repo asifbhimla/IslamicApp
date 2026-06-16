@@ -19,11 +19,11 @@ Future<void> main() async {
     FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack));
   }
 
-  runApp(IslamicApp(appState: appState));
+  runApp(QalbCareApp(appState: appState));
 }
 
-class IslamicApp extends StatelessWidget {
-  const IslamicApp({super.key, required this.appState});
+class QalbCareApp extends StatelessWidget {
+  const QalbCareApp({super.key, required this.appState});
 
   final AppState appState;
 
@@ -32,15 +32,15 @@ class IslamicApp extends StatelessWidget {
     return ChangeNotifierProvider.value(
       value: appState,
       child: MaterialApp(
-        title: 'Islamic App',
+        title: 'QalbCare',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00695C)),
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7B5EA7)),
           useMaterial3: true,
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF00695C),
+            seedColor: const Color(0xFF7B5EA7),
             brightness: Brightness.dark,
           ),
           useMaterial3: true,

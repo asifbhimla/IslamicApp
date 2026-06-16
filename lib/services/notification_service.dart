@@ -78,7 +78,7 @@ class NotificationService {
           await _plugin.zonedSchedule(
             id: id++,
             title: '${entry.name} prayer time',
-            body: "It's time for ${entry.name} in ${state.locationLabel}",
+            body: "QalbCare: It's time for ${entry.name} in ${state.locationLabel}",
             scheduledDate: tz.TZDateTime.from(entry.time, tz.local),
             notificationDetails: _athanDetails,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

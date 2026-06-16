@@ -105,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const _SectionHeader('About'),
           const ListTile(
             leading: Icon(Icons.info_outline),
-            title: Text('Islamic App'),
+            title: Text('QalbCare'),
             subtitle: Text(
                 'Prayer times are calculated locally on your device using the '
                 'selected method. Quran text and translation (Saheeh '

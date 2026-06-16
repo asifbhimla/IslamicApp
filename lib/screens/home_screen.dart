@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final timeFormat = DateFormat('h:mm a');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Islamic App')),
+      appBar: AppBar(title: const Text('QalbCare')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -60,12 +60,13 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.tertiary,
+                  Color(0xFF7B5EA7),
+                  Color(0xFF4A7BF7),
+                  Color(0xFF22D3EE),
                 ],
               ),
             ),
