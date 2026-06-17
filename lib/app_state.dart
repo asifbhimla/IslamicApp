@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:adhan_dart/adhan_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hijri/hijri_calendar.dart';
@@ -225,6 +227,21 @@ class AppState extends ChangeNotifier {
       coordinates: Coordinates(latitude, longitude),
       calculationParameters: _parameters,
     );
+  }
+
+  /// Initial great-circle bearing (degrees clockwise from true north) from the
+  /// current location to the Kaaba in Makkah.
+  double get qiblaDirection {
+    const kaabaLat = 21.4225;
+    const kaabaLng = 39.8262;
+    final phi1 = latitude * math.pi / 180;
+    final phi2 = kaabaLat * math.pi / 180;
+    final deltaLng = (kaabaLng - longitude) * math.pi / 180;
+    final y = math.sin(deltaLng) * math.cos(phi2);
+    final x = math.cos(phi1) * math.sin(phi2) -
+        math.sin(phi1) * math.cos(phi2) * math.cos(deltaLng);
+    final bearing = math.atan2(y, x) * 180 / math.pi;
+    return (bearing + 360) % 360;
   }
 
   /// The five daily prayers plus sunrise for [date], in local time.

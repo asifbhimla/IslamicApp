@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'calendar_screen.dart';
 import 'duas_screen.dart';
 import 'home_screen.dart';
+import 'qibla_screen.dart';
 import 'quran_screen.dart';
 import 'settings_screen.dart';
 
@@ -28,6 +29,15 @@ class _RootScreenState extends State<RootScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const QiblaScreen()),
+        ),
+        shape: const CircleBorder(),
+        tooltip: 'Qibla finder',
+        child: const Icon(Icons.explore),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (index) => setState(() => _index = index),

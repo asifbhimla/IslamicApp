@@ -50,6 +50,19 @@ void main() {
       expect(next.time.isAfter(now), isTrue);
     });
 
+    test('Qibla direction from London points toward Makkah', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      state.latitude = 51.5074;
+      state.longitude = -0.1278;
+      final qibla = state.qiblaDirection;
+      // The Qibla from London is roughly 118-119 degrees from north.
+      expect(qibla, greaterThan(110));
+      expect(qibla, lessThan(130));
+    });
+
     test('Hanafi madhab gives a later Asr', () async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();
