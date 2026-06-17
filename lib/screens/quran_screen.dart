@@ -14,6 +14,8 @@ class QuranScreen extends StatefulWidget {
 
 class _QuranScreenState extends State<QuranScreen>
     with SingleTickerProviderStateMixin {
+  static const double _tabBarArea = 58;
+
   String _query = '';
   late final TabController _tabController =
       TabController(length: 2, vsync: this);
@@ -36,26 +38,69 @@ class _QuranScreenState extends State<QuranScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(text: 'Surah'),
-            Tab(text: 'Juz'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(_tabBarArea),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                splashBorderRadius: BorderRadius.circular(12),
+                labelColor: theme.colorScheme.primary,
+                unselectedLabelColor: Colors.white,
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                unselectedLabelStyle:
+                    const TextStyle(fontWeight: FontWeight.w500),
+                tabs: const [
+                  Tab(text: 'Surah'),
+                  Tab(text: 'Juz'),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
       body: AppBackground(
         child: Padding(
-          padding: EdgeInsets.only(
-              top: topInset + kToolbarHeight + kTextTabBarHeight + 8),
-          child: TabBarView(
-            controller: _tabController,
+          padding: EdgeInsets.only(top: topInset + kToolbarHeight + _tabBarArea),
+          child: Column(
             children: [
-              _buildSurahTab(theme),
-              const JuzListView(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Search by name or number',
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.9),
+                    border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide.none,
+                    ),
+                    isDense: true,
+                  ),
+                  onChanged: (value) => setState(() => _query = value.trim()),
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildSurahList(theme),
+                    JuzListView(query: _query),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -63,7 +108,7 @@ class _QuranScreenState extends State<QuranScreen>
     );
   }
 
-  Widget _buildSurahTab(ThemeData theme) {
+  Widget _buildSurahList(ThemeData theme) {
     final surahs = [
       for (var i = 1; i <= quran.totalSurahCount; i++) i,
     ].where((i) {
@@ -74,69 +119,51 @@ class _QuranScreenState extends State<QuranScreen>
           i.toString() == q;
     }).toList();
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: TextField(
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              hintText: 'Search surah by name or number',
-              filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.9),
-              border: const OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12)),
-                borderSide: BorderSide.none,
-              ),
-              isDense: true,
-            ),
-            onChanged: (value) => setState(() => _query = value.trim()),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: surahs.length,
-            itemBuilder: (context, index) {
-              final surah = surahs[index];
-              return Card(
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.12),
-                    child: Text(
-                      '$surah',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  title: Text(quran.getSurahName(surah)),
-                  subtitle: Text(
-                    '${quran.getSurahNameEnglish(surah)} · '
-                    '${quran.getPlaceOfRevelation(surah)} · '
-                    '${quran.getVerseCount(surah)} verses',
-                  ),
-                  trailing: Text(
-                    quran.getSurahNameArabic(surah),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => SurahDetailScreen(surahNumber: surah),
-                    ),
-                  ),
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+      itemCount: surahs.length,
+      itemBuilder: (context, index) {
+        final surah = surahs[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 3),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor:
+                  theme.colorScheme.primary.withValues(alpha: 0.12),
+              child: Text(
+                '$surah',
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-              );
-            },
+              ),
+            ),
+            title: Text(
+              quran.getSurahName(surah),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              '${quran.getSurahNameEnglish(surah)} · '
+              '${quran.getPlaceOfRevelation(surah)} · '
+              '${quran.getVerseCount(surah)} verses',
+            ),
+            trailing: Text(
+              quran.getSurahNameArabic(surah),
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SurahDetailScreen(surahNumber: surah),
+              ),
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

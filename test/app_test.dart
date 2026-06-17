@@ -77,7 +77,7 @@ void main() {
       expect(find.text('Al Fatiha'), findsNothing);
     });
 
-    testWidgets('Quran screen Juz tab lists all 30 ajza', (tester) async {
+    testWidgets('Quran screen Juz tab lists ajza by name', (tester) async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();
       await tester.pumpWidget(_wrap(const QuranScreen(), state));
@@ -85,14 +85,14 @@ void main() {
       await tester.tap(find.text('Juz'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Juz 1'), findsOneWidget);
+      expect(find.text('Alif Lam Meem'), findsOneWidget);
       final juzScrollable = find.descendant(
         of: find.byKey(const ValueKey('juzListView')),
         matching: find.byType(Scrollable),
       );
-      await tester.scrollUntilVisible(find.text('Juz 30'), 300,
+      await tester.scrollUntilVisible(find.text("'Amma"), 300,
           scrollable: juzScrollable);
-      expect(find.text('Juz 30'), findsOneWidget);
+      expect(find.text("'Amma"), findsOneWidget);
     });
 
     testWidgets('Duas screen shows all categories', (tester) async {
