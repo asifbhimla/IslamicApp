@@ -117,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               gradient: const LinearGradient(
@@ -142,20 +142,28 @@ class _HomeScreenState extends State<HomeScreen> {
                             ?.copyWith(color: Colors.white70),
                       ),
                       Text(
-                        next.name,
-                        style: theme.textTheme.headlineSmall?.copyWith(
+                        '${next.name} ends in',
+                        style: theme.textTheme.titleLarge?.copyWith(
                             color: Colors.white, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        timeFormat.format(next.time),
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(color: Colors.white),
+                        _countdownTo(next.time),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${next.name}  ${timeFormat.format(next.time)}',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
                 SizedBox(
                   width: 100,
                   height: 100,
@@ -191,60 +199,59 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 72,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: entries.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final entry = entries[index];
-                final isNext = entry.name == next.name;
-                return Container(
-                  width: 72,
-                  decoration: BoxDecoration(
-                    color: isNext
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _iconFor(entry.name),
-                        size: 18,
-                        color: isNext
-                            ? theme.colorScheme.primary
-                            : Colors.white,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.name,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
-                          color: isNext
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (int i = 0; i < entries.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: entries[i].name == next.name
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _iconFor(entries[i].name),
+                          size: 16,
+                          color: entries[i].name == next.name
                               ? theme.colorScheme.primary
                               : Colors.white,
                         ),
-                      ),
-                      Text(
-                        timeFormat.format(entry.time),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isNext
-                              ? theme.colorScheme.primary
-                              : Colors.white70,
+                        const SizedBox(height: 2),
+                        Text(
+                          entries[i].name,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: entries[i].name == next.name
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: entries[i].name == next.name
+                                ? theme.colorScheme.primary
+                                : Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        Text(
+                          timeFormat.format(entries[i].time),
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: entries[i].name == next.name
+                                ? theme.colorScheme.primary
+                                : Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 4),
           Text(
