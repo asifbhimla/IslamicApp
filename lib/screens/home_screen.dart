@@ -191,6 +191,68 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 72,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: entries.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final entry = entries[index];
+                final isNext = entry.name == next.name;
+                return Container(
+                  width: 72,
+                  decoration: BoxDecoration(
+                    color: isNext
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _iconFor(entry.name),
+                        size: 18,
+                        color: isNext
+                            ? theme.colorScheme.primary
+                            : Colors.white,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        entry.name,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
+                          color: isNext
+                              ? theme.colorScheme.primary
+                              : Colors.white,
+                        ),
+                      ),
+                      Text(
+                        timeFormat.format(entry.time),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isNext
+                              ? theme.colorScheme.primary
+                              : Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Method: ${state.calculationMethod.label} · '
+            'Asr: ${state.madhab.name == 'hanafi' ? 'Hanafi' : 'Shafi'}',
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           if (_dailyAyah != null) ...[
             Text('Ayah of the Day', style: theme.textTheme.titleMedium?.copyWith(color: Colors.white)),
@@ -228,51 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
           ],
-          Text("Today's prayer times", style: theme.textTheme.titleMedium?.copyWith(color: Colors.white)),
-          const SizedBox(height: 8),
-          Card(
-            child: Column(
-              children: [
-                for (final entry in entries)
-                  ListTile(
-                    leading: Icon(
-                      _iconFor(entry.name),
-                      color: entry.name == next.name
-                          ? theme.colorScheme.primary
-                          : null,
-                    ),
-                    title: Text(
-                      entry.name,
-                      style: entry.name == next.name
-                          ? TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary)
-                          : null,
-                    ),
-                    trailing: Text(
-                      timeFormat.format(entry.time),
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: entry.name == next.name
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: entry.name == next.name
-                            ? theme.colorScheme.primary
-                            : null,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Method: ${state.calculationMethod.label} · '
-            'Asr: ${state.madhab.name == 'hanafi' ? 'Hanafi' : 'Shafi'}',
-            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
-            textAlign: TextAlign.center,
-          ),
         ],
         ),
       ),
