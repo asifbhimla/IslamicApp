@@ -3,6 +3,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 
 import '../data/islamic_events.dart';
+import '../widgets/app_background.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -67,33 +68,40 @@ class _CalendarScreenState extends State<CalendarScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Islamic Calendar')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('Islamic Calendar', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: AppBackground(
+        child: ListView(
+        padding: EdgeInsets.fromLTRB(16, kToolbarHeight + MediaQuery.of(context).padding.top + 8, 16, 16),
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
                 onPressed: () => _changeMonth(-1),
-                icon: const Icon(Icons.chevron_left),
+                icon: const Icon(Icons.chevron_left, color: Colors.white),
               ),
               Column(
                 children: [
                   Text(
                     '${_monthNames[_hijriMonth - 1]} $_hijriYear AH',
                     style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                        ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text(
                     _gregorianRangeLabel(daysInMonth),
-                    style: theme.textTheme.bodySmall,
+                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
                   ),
                 ],
               ),
               IconButton(
                 onPressed: () => _changeMonth(1),
-                icon: const Icon(Icons.chevron_right),
+                icon: const Icon(Icons.chevron_right, color: Colors.white),
               ),
             ],
           ),
@@ -114,14 +122,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Text(
                       day,
                       style: theme.textTheme.bodySmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                          ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 4),
-          GridView.builder(
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -177,9 +188,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
               );
             },
           ),
+          ),
+          ),
           const SizedBox(height: 16),
           if (monthEvents.isNotEmpty) ...[
-            Text('This month', style: theme.textTheme.titleMedium),
+            Text('This month', style: theme.textTheme.titleMedium?.copyWith(color: Colors.white)),
             const SizedBox(height: 8),
             Card(
               child: Column(
@@ -211,7 +224,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          Text('Upcoming events', style: theme.textTheme.titleMedium),
+          Text('Upcoming events', style: theme.textTheme.titleMedium?.copyWith(color: Colors.white)),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -232,10 +245,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Text(
             'Hijri dates are estimates based on astronomical calculation and '
             'may differ by a day from local moon sighting.',
-            style: theme.textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
             textAlign: TextAlign.center,
           ),
         ],
+      ),
       ),
     );
   }

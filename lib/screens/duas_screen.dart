@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/duas_data.dart';
+import '../widgets/app_background.dart';
 
 class DuasScreen extends StatelessWidget {
   const DuasScreen({super.key});
@@ -9,31 +10,39 @@ class DuasScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Duas')),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: duaCategories.length,
-        itemBuilder: (context, index) {
-          final category = duaCategories[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.12),
-                child: Icon(category.icon, color: theme.colorScheme.primary),
-              ),
-              title: Text(category.name),
-              subtitle: Text('${category.duas.length} duas'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => DuaListScreen(category: category),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('Duas', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: AppBackground(
+        child: ListView.builder(
+          padding: EdgeInsets.fromLTRB(12, kToolbarHeight + MediaQuery.of(context).padding.top + 8, 12, 16),
+          itemCount: duaCategories.length,
+          itemBuilder: (context, index) {
+            final category = duaCategories[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor:
+                      theme.colorScheme.primary.withValues(alpha: 0.12),
+                  child: Icon(category.icon, color: theme.colorScheme.primary),
+                ),
+                title: Text(category.name),
+                subtitle: Text('${category.duas.length} duas'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => DuaListScreen(category: category),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -48,9 +57,16 @@ class DuaListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(category.name)),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(category.name, style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: AppBackground(
+        child: ListView.builder(
+        padding: EdgeInsets.fromLTRB(12, kToolbarHeight + MediaQuery.of(context).padding.top + 8, 12, 16),
         itemCount: category.duas.length,
         itemBuilder: (context, index) {
           final dua = category.duas[index];
@@ -97,6 +113,7 @@ class DuaListScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../services/location_service.dart';
 import '../services/notification_service.dart';
+import '../widgets/app_background.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -47,71 +48,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final state = context.watch<AppState>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('Settings', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: AppBackground(
+        child: ListView(
+        padding: EdgeInsets.only(top: kToolbarHeight + MediaQuery.of(context).padding.top),
         children: [
           const _SectionHeader('Location'),
-          ListTile(
-            leading: const Icon(Icons.place),
-            title: const Text('Current location'),
-            subtitle: Text(state.locationLabel),
-            trailing: _locating
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.my_location),
-            onTap: _locating ? null : _updateLocation,
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            child: ListTile(
+              leading: const Icon(Icons.place),
+              title: const Text('Current location'),
+              subtitle: Text(state.locationLabel),
+              trailing: _locating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.my_location),
+              onTap: _locating ? null : _updateLocation,
+            ),
           ),
           const _SectionHeader('Prayer times'),
-          ListTile(
-            leading: const Icon(Icons.calculate),
-            title: const Text('Calculation method'),
-            subtitle: Text(state.calculationMethod.label),
-            onTap: () => _pickCalculationMethod(context, state),
-          ),
-          ListTile(
-            leading: const Icon(Icons.schedule),
-            title: const Text('Asr calculation (madhab)'),
-            subtitle: Text(
-                state.madhab == Madhab.hanafi ? 'Hanafi (later Asr)' : 'Shafi, Maliki, Hanbali (standard)'),
-            onTap: () => _pickMadhab(context, state),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.notifications_active),
-            title: const Text('Athan notifications'),
-            subtitle: const Text('Notify at each prayer time'),
-            value: state.athanNotificationsEnabled,
-            onChanged: (value) async {
-              await state.setAthanNotificationsEnabled(value);
-              if (value) await NotificationService.requestPermissions();
-              await NotificationService.rescheduleAthanNotifications(state);
-            },
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.calculate),
+                  title: const Text('Calculation method'),
+                  subtitle: Text(state.calculationMethod.label),
+                  onTap: () => _pickCalculationMethod(context, state),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.schedule),
+                  title: const Text('Asr calculation (madhab)'),
+                  subtitle: Text(
+                      state.madhab == Madhab.hanafi ? 'Hanafi (later Asr)' : 'Shafi, Maliki, Hanbali (standard)'),
+                  onTap: () => _pickMadhab(context, state),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.notifications_active),
+                  title: const Text('Athan notifications'),
+                  subtitle: const Text('Notify at each prayer time'),
+                  value: state.athanNotificationsEnabled,
+                  onChanged: (value) async {
+                    await state.setAthanNotificationsEnabled(value);
+                    if (value) await NotificationService.requestPermissions();
+                    await NotificationService.rescheduleAthanNotifications(state);
+                  },
+                ),
+              ],
+            ),
           ),
           const _SectionHeader('Quran'),
-          ListTile(
-            leading: const Icon(Icons.format_size),
-            title: const Text('Arabic text size'),
-            subtitle: Slider(
-              min: 18,
-              max: 40,
-              divisions: 11,
-              value: state.quranArabicFontSize,
-              label: state.quranArabicFontSize.round().toString(),
-              onChanged: (value) => state.setQuranArabicFontSize(value),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            child: ListTile(
+              leading: const Icon(Icons.format_size),
+              title: const Text('Arabic text size'),
+              subtitle: Slider(
+                min: 18,
+                max: 40,
+                divisions: 11,
+                value: state.quranArabicFontSize,
+                label: state.quranArabicFontSize.round().toString(),
+                onChanged: (value) => state.setQuranArabicFontSize(value),
+              ),
             ),
           ),
           const _SectionHeader('About'),
-          const ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('QalbCare'),
-            subtitle: Text(
-                'Prayer times are calculated locally on your device using the '
-                'selected method. Quran text and translation (Saheeh '
-                'International) are bundled and work fully offline.'),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            child: const ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text('QalbCare'),
+              subtitle: Text(
+                  'Prayer times are calculated locally on your device using the '
+                  'selected method. Quran text and translation (Saheeh '
+                  'International) are bundled and work fully offline.'),
+            ),
           ),
+          const SizedBox(height: 16),
         ],
+      ),
       ),
     );
   }
@@ -190,7 +217,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: theme.textTheme.titleSmall
-            ?.copyWith(color: theme.colorScheme.primary),
+            ?.copyWith(color: Colors.white),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../app_state.dart';
 import '../services/daily_ayah_service.dart';
+import '../widgets/app_background.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -60,10 +61,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final timeFormat = DateFormat('h:mm a');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('QalbCare')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('QalbCare', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: AppBackground(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 48, 16, 16),
+          children: [
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -135,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           if (_dailyAyah != null) ...[
-            Text('Ayah of the Day', style: theme.textTheme.titleMedium),
+            Text('Ayah of the Day', style: theme.textTheme.titleMedium?.copyWith(color: Colors.white)),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -172,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          Text("Today's prayer times", style: theme.textTheme.titleMedium),
+          Text("Today's prayer times", style: theme.textTheme.titleMedium?.copyWith(color: Colors.white)),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -212,10 +219,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             'Method: ${state.calculationMethod.label} · '
             'Asr: ${state.madhab.name == 'hanafi' ? 'Hanafi' : 'Shafi'}',
-            style: theme.textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
             textAlign: TextAlign.center,
           ),
         ],
+        ),
       ),
     );
   }

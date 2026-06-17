@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../app_state.dart';
+import '../widgets/app_background.dart';
 import '../widgets/quran_audio_player.dart';
 
 class SurahDetailScreen extends StatelessWidget {
@@ -20,12 +21,19 @@ class SurahDetailScreen extends StatelessWidget {
     final showBasmala = surahNumber != 1 && surahNumber != 9;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-            '${quran.getSurahName(surahNumber)} · ${quran.getSurahNameArabic(surahNumber)}'),
+            '${quran.getSurahName(surahNumber)} · ${quran.getSurahNameArabic(surahNumber)}',
+            style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Column(
+      body: AppBackground(
+        child: Column(
         children: [
+          SizedBox(height: kToolbarHeight + MediaQuery.of(context).padding.top),
           Card(
             margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
             child: Padding(
@@ -74,6 +82,7 @@ class SurahDetailScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
