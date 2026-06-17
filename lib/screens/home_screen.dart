@@ -82,6 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final now = DateTime.now();
     final next = state.nextPrayer(now: now);
     final entries = state.prayerEntriesFor(now);
+    final fajrTime = entries.firstWhere((e) => e.name == 'Fajr').time;
+    final maghribTime = entries.firstWhere((e) => e.name == 'Maghrib').time;
     final hijri = HijriCalendar.now();
     final timeFormat = DateFormat('h:mm a');
 
@@ -186,29 +188,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Next Prayer',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: Colors.white70),
-                      ),
-                      Text(
-                        '${next.name} ends in',
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        'Next Prayer : ${next.name}',
+                        style: theme.textTheme.titleMedium?.copyWith(
                             color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        _countdownTo(next.time),
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            timeFormat.format(next.time),
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '(Start time)',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: Colors.white70),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 10),
                       Text(
-                        '${next.name}  ${timeFormat.format(next.time)}',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: Colors.white70),
+                        'Suhur: ${timeFormat.format(fajrTime)}',
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Iftar: ${timeFormat.format(maghribTime)}',
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: Colors.white),
                       ),
                     ],
                   ),
