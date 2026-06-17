@@ -43,41 +43,55 @@ class SurahDetailScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
               itemCount: verseCount + 1,
-              separatorBuilder: (_, _) => const Divider(height: 24),
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  return Column(
-                    children: [
-                      Text(
-                        '${quran.getSurahNameEnglish(surahNumber)} · '
-                        '${quran.getPlaceOfRevelation(surahNumber)} · '
-                        '$verseCount verses',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      if (showBasmala) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          quran.basmala,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            height: 1.8,
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Text(
+                            '${quran.getSurahNameEnglish(surahNumber)} · '
+                            '${quran.getPlaceOfRevelation(surahNumber)} · '
+                            '$verseCount verses',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                          textDirection: TextDirection.rtl,
-                        ),
-                      ],
-                    ],
+                          if (showBasmala) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              quran.basmala,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                                height: 1.8,
+                              ),
+                              textAlign: TextAlign.center,
+                              textDirection: TextDirection.rtl,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   );
                 }
                 final verse = index;
-                return _VerseRow(
-                  surahNumber: surahNumber,
-                  verseNumber: verse,
-                  arabicFontSize: arabicFontSize,
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: _VerseRow(
+                      surahNumber: surahNumber,
+                      verseNumber: verse,
+                      arabicFontSize: arabicFontSize,
+                    ),
+                  ),
                 );
               },
             ),
@@ -212,6 +226,8 @@ class _VerseRowState extends State<_VerseRow> {
                 style: TextStyle(
                   fontSize: widget.arabicFontSize,
                   height: 2,
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
@@ -251,10 +267,21 @@ class _VerseRowState extends State<_VerseRow> {
               color: theme.colorScheme.primary,
             ),
           ),
-        Text(
-          '${widget.verseNumber}. $primaryTranslation',
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '${widget.verseNumber}.  ',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextSpan(text: primaryTranslation),
+            ],
+          ),
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: theme.colorScheme.onSurface,
             height: 1.5,
           ),
         ),
@@ -265,7 +292,7 @@ class _VerseRowState extends State<_VerseRow> {
                 quran.getVerseTranslation(
                     widget.surahNumber, widget.verseNumber),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              color: theme.colorScheme.onSurfaceVariant,
               height: 1.5,
               fontStyle: FontStyle.italic,
             ),
@@ -279,7 +306,7 @@ class _VerseRowState extends State<_VerseRow> {
               translation: secondary.translation,
             ),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              color: theme.colorScheme.onSurfaceVariant,
               height: 1.5,
               fontStyle: FontStyle.italic,
             ),
