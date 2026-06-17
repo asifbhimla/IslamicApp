@@ -82,7 +82,32 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('QalbCare', style: TextStyle(color: Colors.white)),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              'قلب',
+              style: TextStyle(
+                color: Color(0xFFD4A843),
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(width: 4),
+            Text(
+              'Care',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w300,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
