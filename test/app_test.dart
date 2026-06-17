@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:islamic_app/app_state.dart';
 import 'package:islamic_app/data/duas_data.dart';
 import 'package:islamic_app/screens/duas_screen.dart';
-import 'package:islamic_app/screens/juz_screen.dart';
 import 'package:islamic_app/screens/quran_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,13 +77,21 @@ void main() {
       expect(find.text('Al Fatiha'), findsNothing);
     });
 
-    testWidgets('Juz screen lists all 30 ajza', (tester) async {
+    testWidgets('Quran screen Juz tab lists all 30 ajza', (tester) async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();
-      await tester.pumpWidget(_wrap(const JuzScreen(), state));
+      await tester.pumpWidget(_wrap(const QuranScreen(), state));
+
+      await tester.tap(find.text('Juz'));
+      await tester.pumpAndSettle();
 
       expect(find.text('Juz 1'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('Juz 30'), 300);
+      final juzScrollable = find.descendant(
+        of: find.byKey(const ValueKey('juzListView')),
+        matching: find.byType(Scrollable),
+      );
+      await tester.scrollUntilVisible(find.text('Juz 30'), 300,
+          scrollable: juzScrollable);
       expect(find.text('Juz 30'), findsOneWidget);
     });
 
