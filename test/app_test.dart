@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:islamic_app/app_state.dart';
 import 'package:islamic_app/data/duas_data.dart';
 import 'package:islamic_app/screens/duas_screen.dart';
+import 'package:islamic_app/screens/juz_screen.dart';
 import 'package:islamic_app/screens/quran_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -75,6 +76,16 @@ void main() {
       await tester.pump();
       expect(find.text("Ya'sin"), findsOneWidget);
       expect(find.text('Al Fatiha'), findsNothing);
+    });
+
+    testWidgets('Juz screen lists all 30 ajza', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await tester.pumpWidget(_wrap(const JuzScreen(), state));
+
+      expect(find.text('Juz 1'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Juz 30'), 300);
+      expect(find.text('Juz 30'), findsOneWidget);
     });
 
     testWidgets('Duas screen shows all categories', (tester) async {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
@@ -9,9 +11,17 @@ import '../widgets/app_background.dart';
 import '../widgets/quran_audio_player.dart';
 
 class SurahDetailScreen extends StatefulWidget {
-  const SurahDetailScreen({super.key, required this.surahNumber});
+  const SurahDetailScreen({
+    super.key,
+    required this.surahNumber,
+    this.initialVerse,
+  });
 
   final int surahNumber;
+
+  /// When set, the reader scrolls to and briefly highlights this verse on
+  /// open (used when entering from a Juz that starts mid-surah).
+  final int? initialVerse;
 
   @override
   State<SurahDetailScreen> createState() => _SurahDetailScreenState();
@@ -19,7 +29,60 @@ class SurahDetailScreen extends StatefulWidget {
 
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   int? _playingVerse;
+  int? _landingVerse;
   final Map<int, GlobalKey> _verseKeys = {};
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialVerse;
+    if (initial != null && initial > 1) {
+      _landingVerse = initial;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToVerse(initial));
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Scroll to a verse that may not be built yet by advancing the list in
+  /// steps until the target row is laid out, then centring it.
+  Future<void> _jumpToVerse(int verse) async {
+    for (var attempt = 0; attempt < 40; attempt++) {
+      if (!mounted) return;
+      final ctx = _verseKeys[verse]?.currentContext;
+      if (ctx != null && ctx.mounted) {
+        await Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.15,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        break;
+      }
+      if (!_scrollController.hasClients) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        continue;
+      }
+      final position = _scrollController.position;
+      if (position.pixels >= position.maxScrollExtent) break;
+      await _scrollController.animateTo(
+        math.min(position.pixels + position.viewportDimension * 0.85,
+            position.maxScrollExtent),
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.linear,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+    }
+    if (!mounted) return;
+    // Clear the landing highlight after a moment so it is just a visual cue.
+    await Future<void>.delayed(const Duration(seconds: 3));
+    if (mounted) setState(() => _landingVerse = null);
+  }
 
   void _onPlayingVerseChanged(int? verse) {
     if (!mounted || verse == _playingVerse) return;
@@ -73,6 +136,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           ),
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
               itemCount: verseCount + 1,
               itemBuilder: (context, index) {
@@ -111,14 +175,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                   );
                 }
                 final verse = index;
-                final isPlaying = _playingVerse == verse;
+                final highlighted =
+                    _playingVerse == verse || _landingVerse == verse;
                 return Card(
                   key: _verseKeys.putIfAbsent(verse, () => GlobalKey()),
                   margin: const EdgeInsets.only(bottom: 10),
-                  color: isPlaying ? theme.colorScheme.primaryContainer : null,
+                  color:
+                      highlighted ? theme.colorScheme.primaryContainer : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: isPlaying
+                    side: highlighted
                         ? BorderSide(color: theme.colorScheme.primary, width: 2)
                         : BorderSide.none,
                   ),
@@ -128,7 +194,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                       surahNumber: surahNumber,
                       verseNumber: verse,
                       arabicFontSize: arabicFontSize,
-                      highlighted: isPlaying,
+                      highlighted: highlighted,
                     ),
                   ),
                 );

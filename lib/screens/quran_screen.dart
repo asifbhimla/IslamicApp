@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../widgets/app_background.dart';
+import 'juz_screen.dart';
 import 'surah_detail_screen.dart';
 
 class QuranScreen extends StatefulWidget {
@@ -34,6 +35,15 @@ class _QuranScreenState extends State<QuranScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.format_list_numbered, color: Colors.white),
+            tooltip: 'Browse by Juz',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const JuzScreen()),
+            ),
+          ),
+        ],
       ),
       body: AppBackground(
         child: Column(
