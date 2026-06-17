@@ -8,14 +8,40 @@ import '../services/alquran_cloud_service.dart';
 import '../widgets/app_background.dart';
 import '../widgets/quran_audio_player.dart';
 
-class SurahDetailScreen extends StatelessWidget {
+class SurahDetailScreen extends StatefulWidget {
   const SurahDetailScreen({super.key, required this.surahNumber});
 
   final int surahNumber;
 
   @override
+  State<SurahDetailScreen> createState() => _SurahDetailScreenState();
+}
+
+class _SurahDetailScreenState extends State<SurahDetailScreen> {
+  int? _playingVerse;
+  final Map<int, GlobalKey> _verseKeys = {};
+
+  void _onPlayingVerseChanged(int? verse) {
+    if (!mounted || verse == _playingVerse) return;
+    setState(() => _playingVerse = verse);
+    if (verse == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _verseKeys[verse]?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.3,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surahNumber = widget.surahNumber;
     final arabicFontSize = context
         .select<AppState, double>((state) => state.quranArabicFontSize);
     final verseCount = quran.getVerseCount(surahNumber);
@@ -39,7 +65,10 @@ class SurahDetailScreen extends StatelessWidget {
             margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: QuranAudioPlayer(surahNumber: surahNumber),
+              child: QuranAudioPlayer(
+                surahNumber: surahNumber,
+                onPlayingVerseChanged: _onPlayingVerseChanged,
+              ),
             ),
           ),
           Expanded(
@@ -82,14 +111,24 @@ class SurahDetailScreen extends StatelessWidget {
                   );
                 }
                 final verse = index;
+                final isPlaying = _playingVerse == verse;
                 return Card(
+                  key: _verseKeys.putIfAbsent(verse, () => GlobalKey()),
                   margin: const EdgeInsets.only(bottom: 10),
+                  color: isPlaying ? theme.colorScheme.primaryContainer : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: isPlaying
+                        ? BorderSide(color: theme.colorScheme.primary, width: 2)
+                        : BorderSide.none,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: _VerseRow(
                       surahNumber: surahNumber,
                       verseNumber: verse,
                       arabicFontSize: arabicFontSize,
+                      highlighted: isPlaying,
                     ),
                   ),
                 );
@@ -108,11 +147,13 @@ class _VerseRow extends StatefulWidget {
     required this.surahNumber,
     required this.verseNumber,
     required this.arabicFontSize,
+    this.highlighted = false,
   });
 
   final int surahNumber;
   final int verseNumber;
   final double arabicFontSize;
+  final bool highlighted;
 
   @override
   State<_VerseRow> createState() => _VerseRowState();
@@ -206,6 +247,17 @@ class _VerseRowState extends State<_VerseRow> {
     final useApi = state.useAlQuranCloudApi;
     final secondary = state.secondaryTranslation;
 
+    final highlighted = widget.highlighted;
+    final mainText = highlighted
+        ? theme.colorScheme.onPrimaryContainer
+        : theme.colorScheme.onSurface;
+    final accentText = highlighted
+        ? theme.colorScheme.onPrimaryContainer
+        : theme.colorScheme.primary;
+    final subText = highlighted
+        ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.85)
+        : theme.colorScheme.onSurfaceVariant;
+
     final primaryTranslation = useApi
         ? (_apiTranslation ??
             quran.getVerseTranslation(
@@ -226,7 +278,7 @@ class _VerseRowState extends State<_VerseRow> {
                 style: TextStyle(
                   fontSize: widget.arabicFontSize,
                   height: 2,
-                  color: theme.colorScheme.onSurface,
+                  color: mainText,
                   fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.right,
@@ -248,7 +300,7 @@ class _VerseRowState extends State<_VerseRow> {
                       icon: Icon(
                         _playing ? Icons.stop : Icons.play_arrow,
                         size: 20,
-                        color: theme.colorScheme.primary,
+                        color: accentText,
                       ),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -273,7 +325,7 @@ class _VerseRowState extends State<_VerseRow> {
               TextSpan(
                 text: '${widget.verseNumber}.  ',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.primary,
+                  color: accentText,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -281,7 +333,7 @@ class _VerseRowState extends State<_VerseRow> {
             ],
           ),
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
+            color: mainText,
             height: 1.5,
           ),
         ),
@@ -292,7 +344,7 @@ class _VerseRowState extends State<_VerseRow> {
                 quran.getVerseTranslation(
                     widget.surahNumber, widget.verseNumber),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: subText,
               height: 1.5,
               fontStyle: FontStyle.italic,
             ),
@@ -306,7 +358,7 @@ class _VerseRowState extends State<_VerseRow> {
               translation: secondary.translation,
             ),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: subText,
               height: 1.5,
               fontStyle: FontStyle.italic,
             ),

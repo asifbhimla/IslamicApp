@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran/quran.dart' as quran;
@@ -7,10 +9,15 @@ class QuranAudioPlayer extends StatefulWidget {
     super.key,
     required this.surahNumber,
     this.verseNumber,
+    this.onPlayingVerseChanged,
   });
 
   final int surahNumber;
   final int? verseNumber;
+
+  /// Called with the verse number currently sounding during full-surah
+  /// playback, or null when nothing is playing. Only used in surah mode.
+  final ValueChanged<int?>? onPlayingVerseChanged;
 
   @override
   State<QuranAudioPlayer> createState() => _QuranAudioPlayerState();
@@ -22,8 +29,38 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer> {
   String? _error;
   quran.Reciter _reciter = quran.Reciter.arAlafasy;
 
+  StreamSubscription<int?>? _indexSub;
+  StreamSubscription<PlayerState>? _stateSub;
+  int? _lastEmittedVerse;
+
+  @override
+  void initState() {
+    super.initState();
+    _indexSub = _player.currentIndexStream.listen((_) => _emitPlayingVerse());
+    _stateSub =
+        _player.playerStateStream.listen((_) => _emitPlayingVerse());
+  }
+
+  void _emitPlayingVerse() {
+    final callback = widget.onPlayingVerseChanged;
+    if (callback == null || widget.verseNumber != null) return;
+    final state = _player.processingState;
+    final index = _player.currentIndex;
+    final active = index != null &&
+        (state == ProcessingState.ready ||
+            state == ProcessingState.buffering);
+    final verse = active ? index + 1 : null;
+    if (verse != _lastEmittedVerse) {
+      _lastEmittedVerse = verse;
+      callback(verse);
+    }
+  }
+
   @override
   void dispose() {
+    _indexSub?.cancel();
+    _stateSub?.cancel();
+    widget.onPlayingVerseChanged?.call(null);
     _player.dispose();
     super.dispose();
   }
@@ -34,12 +71,25 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer> {
       _error = null;
     });
     try {
-      final url = widget.verseNumber != null
-          ? quran.getAudioURLByVerse(
+      if (widget.verseNumber != null) {
+        await _player.setUrl(
+          quran.getAudioURLByVerse(
               widget.surahNumber, widget.verseNumber!,
-              reciter: _reciter)
-          : quran.getAudioURLBySurah(widget.surahNumber, reciter: _reciter);
-      await _player.setUrl(url);
+              reciter: _reciter),
+        );
+      } else {
+        // Play the surah as a playlist of per-verse clips so the currently
+        // sounding ayah can be tracked via the playlist index.
+        final verseCount = quran.getVerseCount(widget.surahNumber);
+        final sources = <AudioSource>[
+          for (var v = 1; v <= verseCount; v++)
+            AudioSource.uri(
+              Uri.parse(quran.getAudioURLByVerse(widget.surahNumber, v,
+                  reciter: _reciter)),
+            ),
+        ];
+        await _player.setAudioSources(sources);
+      }
       _player.play();
     } catch (e) {
       _error = 'Could not load audio. Check your internet connection.';
