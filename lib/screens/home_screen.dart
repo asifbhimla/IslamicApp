@@ -6,6 +6,8 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 
+import 'package:quran/quran.dart' as quran;
+
 import '../app_state.dart';
 import '../services/daily_ayah_service.dart';
 import '../widgets/app_background.dart';
@@ -309,6 +311,28 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 1.5,
                       ),
                     ),
+                    if (state.secondaryTranslation != null) ...[
+                      const Divider(height: 20),
+                      Text(
+                        state.secondaryTranslation!.label,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        quran.getVerseTranslation(
+                          _dailyAyah!.surahNumber,
+                          _dailyAyah!.verseNumber,
+                          translation: state.secondaryTranslation!.translation,
+                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Text(
                       '— ${_dailyAyah!.surahName} ${_dailyAyah!.surahNumber}:${_dailyAyah!.verseNumber}',

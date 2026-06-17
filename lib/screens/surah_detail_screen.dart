@@ -141,6 +141,8 @@ class _VerseRowState extends State<_VerseRow> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final secondary = context.select<AppState, TranslationOption?>(
+        (state) => state.secondaryTranslation);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -192,6 +194,21 @@ class _VerseRowState extends State<_VerseRow> {
             height: 1.5,
           ),
         ),
+        if (secondary != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            quran.getVerseTranslation(
+              widget.surahNumber,
+              widget.verseNumber,
+              translation: secondary.translation,
+            ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              height: 1.5,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
       ],
     );
   }

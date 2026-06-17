@@ -127,17 +127,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const _SectionHeader('Quran'),
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 12),
-            child: ListTile(
-              leading: const Icon(Icons.format_size),
-              title: const Text('Arabic text size'),
-              subtitle: Slider(
-                min: 18,
-                max: 40,
-                divisions: 11,
-                value: state.quranArabicFontSize,
-                label: state.quranArabicFontSize.round().toString(),
-                onChanged: (value) => state.setQuranArabicFontSize(value),
-              ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.format_size),
+                  title: const Text('Arabic text size'),
+                  subtitle: Slider(
+                    min: 18,
+                    max: 40,
+                    divisions: 11,
+                    value: state.quranArabicFontSize,
+                    label: state.quranArabicFontSize.round().toString(),
+                    onChanged: (value) => state.setQuranArabicFontSize(value),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.translate),
+                  title: const Text('Secondary translation'),
+                  subtitle: Text(
+                    state.secondaryTranslation?.label ?? 'None',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _pickSecondaryTranslation(context, state),
+                ),
+              ],
             ),
           ),
           const _SectionHeader('About'),
@@ -157,6 +170,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       ),
     );
+  }
+
+  Future<void> _pickSecondaryTranslation(
+      BuildContext context, AppState state) async {
+    final key = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Secondary translation'),
+        children: [
+          for (final option in translationOptions)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(option.key),
+              child: Row(
+                children: [
+                  if (option.key == state.secondaryTranslationKey)
+                    const Icon(Icons.check, size: 20)
+                  else
+                    const SizedBox(width: 20),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(option.label)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (key == null) return;
+    await state.setSecondaryTranslation(key);
   }
 
   Future<void> _pickCity(BuildContext context, AppState state) async {

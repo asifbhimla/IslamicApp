@@ -1,6 +1,36 @@
 import 'package:adhan_dart/adhan_dart.dart';
 import 'package:flutter/foundation.dart';
+import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// Translation language options for the Quran.
+class TranslationOption {
+  const TranslationOption(this.key, this.label, this.translation);
+
+  final String key;
+  final String label;
+  final quran.Translation translation;
+}
+
+final List<TranslationOption> translationOptions = [
+  const TranslationOption('none', 'None (disabled)', quran.Translation.enSaheeh),
+  const TranslationOption('enSaheeh', 'English (Saheeh International)', quran.Translation.enSaheeh),
+  const TranslationOption('enClearQuran', 'English (Clear Quran)', quran.Translation.enClearQuran),
+  const TranslationOption('urdu', 'Urdu', quran.Translation.urdu),
+  const TranslationOption('french', 'French', quran.Translation.frHamidullah),
+  const TranslationOption('turkish', 'Turkish', quran.Translation.trSaheeh),
+  const TranslationOption('indonesian', 'Indonesian', quran.Translation.indonesian),
+  const TranslationOption('bengali', 'Bengali', quran.Translation.bengali),
+  const TranslationOption('russian', 'Russian', quran.Translation.ruKuliev),
+  const TranslationOption('chinese', 'Chinese', quran.Translation.chinese),
+  const TranslationOption('spanish', 'Spanish', quran.Translation.spanish),
+  const TranslationOption('portuguese', 'Portuguese', quran.Translation.portuguese),
+  const TranslationOption('italian', 'Italian', quran.Translation.itPiccardo),
+  const TranslationOption('dutch', 'Dutch', quran.Translation.nlSiregar),
+  const TranslationOption('swedish', 'Swedish', quran.Translation.swedish),
+  const TranslationOption('persian', 'Persian (Farsi)', quran.Translation.faHusseinDari),
+  const TranslationOption('malayalam', 'Malayalam', quran.Translation.mlAbdulHameed),
+];
 
 /// Calculation methods offered in Settings, keyed by a stable string that is
 /// persisted in SharedPreferences.
@@ -59,6 +89,15 @@ class AppState extends ChangeNotifier {
   Madhab madhab = Madhab.shafi;
   bool athanNotificationsEnabled = true;
   double quranArabicFontSize = 26;
+  String secondaryTranslationKey = 'none';
+
+  TranslationOption? get secondaryTranslation {
+    if (secondaryTranslationKey == 'none') return null;
+    return translationOptions.firstWhere(
+      (t) => t.key == secondaryTranslationKey,
+      orElse: () => translationOptions.first,
+    );
+  }
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -74,6 +113,8 @@ class AppState extends ChangeNotifier {
         prefs.getBool('athanNotificationsEnabled') ?? true;
     quranArabicFontSize =
         prefs.getDouble('quranArabicFontSize') ?? quranArabicFontSize;
+    secondaryTranslationKey =
+        prefs.getString('secondaryTranslation') ?? secondaryTranslationKey;
     notifyListeners();
   }
 
@@ -88,6 +129,7 @@ class AppState extends ChangeNotifier {
     await prefs.setBool(
         'athanNotificationsEnabled', athanNotificationsEnabled);
     await prefs.setDouble('quranArabicFontSize', quranArabicFontSize);
+    await prefs.setString('secondaryTranslation', secondaryTranslationKey);
   }
 
   CalculationMethodOption get calculationMethod => calculationMethods
@@ -163,6 +205,12 @@ class AppState extends ChangeNotifier {
 
   Future<void> setQuranArabicFontSize(double value) async {
     quranArabicFontSize = value;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setSecondaryTranslation(String key) async {
+    secondaryTranslationKey = key;
     notifyListeners();
     await _save();
   }
