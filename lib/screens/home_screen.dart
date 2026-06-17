@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
@@ -60,6 +61,24 @@ class _HomeScreenState extends State<HomeScreen> {
     final hijri = HijriCalendar.now();
     final timeFormat = DateFormat('h:mm a');
 
+    // Calculate countdown progress (fraction of time elapsed since previous prayer)
+    final obligatoryToday = entries.where((e) => e.isObligatory).toList();
+    DateTime previousPrayerTime;
+    final idx = obligatoryToday.indexWhere((e) => e.name == next.name);
+    if (idx > 0) {
+      previousPrayerTime = obligatoryToday[idx - 1].time;
+    } else {
+      // Next is Fajr (today or tomorrow) — previous was yesterday's Isha
+      final yesterday = now.subtract(const Duration(days: 1));
+      final yesterdayEntries = state.prayerEntriesFor(yesterday);
+      previousPrayerTime = yesterdayEntries.last.time;
+    }
+    final totalDuration = next.time.difference(previousPrayerTime).inSeconds;
+    final elapsed = now.difference(previousPrayerTime).inSeconds;
+    final progress = totalDuration > 0
+        ? (elapsed / totalDuration).clamp(0.0, 1.0)
+        : 0.0;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -111,31 +130,63 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  'Next prayer: ${next.name}',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Next Prayer',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: Colors.white70),
+                      ),
+                      Text(
+                        next.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        timeFormat.format(next.time),
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
-                Text(
-                  timeFormat.format(next.time),
-                  style: theme.textTheme.headlineMedium
-                      ?.copyWith(color: Colors.white),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.hourglass_bottom,
-                        color: Colors.white70, size: 18),
-                    const SizedBox(width: 6),
-                    Text(
-                      'in ${_countdownTo(next.time)}',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(color: Colors.white),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: CustomPaint(
+                    painter: _CountdownRingPainter(progress: progress),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Time',
+                            style: theme.textTheme.labelSmall
+                                ?.copyWith(color: Colors.white70, fontSize: 10),
+                          ),
+                          Text(
+                            _countdownTo(next.time),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            'Left',
+                            style: theme.textTheme.labelSmall
+                                ?.copyWith(color: Colors.white70, fontSize: 10),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -246,4 +297,66 @@ class _HomeScreenState extends State<HomeScreen> {
         return Icons.access_time;
     }
   }
+}
+
+class _CountdownRingPainter extends CustomPainter {
+  _CountdownRingPainter({required this.progress});
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 6;
+    const strokeWidth = 6.0;
+
+    // Background track
+    final trackPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    if (progress <= 0) return;
+
+    // Gradient arc — sweeps from top, clockwise
+    // Colors go green → yellow → orange → red as time elapses
+    final sweepAngle = 2 * math.pi * progress;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final gradient = SweepGradient(
+      colors: const [
+        Color(0xFF4ADE80),
+        Color(0xFFFBBF24),
+        Color(0xFFF97316),
+        Color(0xFFEF4444),
+        Color(0xFF4ADE80),
+      ],
+      transform: const GradientRotation(-math.pi / 2),
+    );
+
+    final arcPaint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      sweepAngle,
+      false,
+      arcPaint,
+    );
+
+    // Bright dot at the tip of the arc
+    final tipAngle = -math.pi / 2 + sweepAngle;
+    final tipX = center.dx + radius * math.cos(tipAngle);
+    final tipY = center.dy + radius * math.sin(tipAngle);
+    canvas.drawCircle(Offset(tipX, tipY), 5, Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(tipX, tipY), 3, Paint()..color = const Color(0xFF4ADE80));
+  }
+
+  @override
+  bool shouldRepaint(_CountdownRingPainter old) => old.progress != progress;
 }
