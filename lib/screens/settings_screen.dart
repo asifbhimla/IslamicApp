@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../app_state.dart';
+import '../services/alquran_cloud_service.dart';
 import '../services/location_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/app_background.dart';
@@ -141,15 +142,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onChanged: (value) => state.setQuranArabicFontSize(value),
                   ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.translate),
-                  title: const Text('Secondary translation'),
-                  subtitle: Text(
-                    state.secondaryTranslation?.label ?? 'None',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _pickSecondaryTranslation(context, state),
+                SwitchListTile(
+                  secondary: const Icon(Icons.cloud),
+                  title: const Text('Use AlQuran Cloud API'),
+                  subtitle: const Text(
+                      'Fetch translations online (100+ languages)'),
+                  value: state.useAlQuranCloudApi,
+                  onChanged: (value) => state.setUseAlQuranCloudApi(value),
                 ),
+                if (!state.useAlQuranCloudApi)
+                  ListTile(
+                    leading: const Icon(Icons.translate),
+                    title: const Text('Secondary translation'),
+                    subtitle: Text(
+                      state.secondaryTranslation?.label ?? 'None',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _pickSecondaryTranslation(context, state),
+                  ),
+                if (state.useAlQuranCloudApi) ...[
+                  ListTile(
+                    leading: const Icon(Icons.translate),
+                    title: const Text('Primary translation (API)'),
+                    subtitle: Text(state.apiPrimaryEdition),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _pickApiEdition(
+                      context,
+                      state,
+                      current: state.apiPrimaryEdition,
+                      onPicked: (id) => state.setApiPrimaryEdition(id),
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.translate_outlined),
+                    title: const Text('Secondary translation (API)'),
+                    subtitle: Text(state.apiSecondaryEdition == 'none'
+                        ? 'None'
+                        : state.apiSecondaryEdition),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _pickApiEdition(
+                      context,
+                      state,
+                      current: state.apiSecondaryEdition,
+                      showNone: true,
+                      onPicked: (id) => state.setApiSecondaryEdition(id),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -200,7 +239,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await state.setSecondaryTranslation(key);
   }
 
+  Future<void> _pickApiEdition(
+    BuildContext context,
+    AppState state, {
+    required String current,
+    required ValueChanged<String> onPicked,
+    bool showNone = false,
+  }) async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => _ApiEditionPickerScreen(
+          current: current,
+          showNone: showNone,
+        ),
+      ),
+    );
+    if (result == null) return;
+    onPicked(result);
+  }
+
   Future<void> _pickCity(BuildContext context, AppState state) async {
+    final messenger = ScaffoldMessenger.of(context);
     final city = await Navigator.of(context).push<_City>(
       MaterialPageRoute(builder: (_) => const _CityPickerScreen()),
     );
@@ -208,7 +267,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await state.setLocation(city.lat, city.lng, city.label);
     await NotificationService.rescheduleAthanNotifications(state);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Location set to ${city.label}')),
       );
     }
@@ -372,6 +431,127 @@ class _CityPickerScreenState extends State<_CityPickerScreen> {
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ApiEditionPickerScreen extends StatefulWidget {
+  const _ApiEditionPickerScreen({
+    required this.current,
+    this.showNone = false,
+  });
+
+  final String current;
+  final bool showNone;
+
+  @override
+  State<_ApiEditionPickerScreen> createState() =>
+      _ApiEditionPickerScreenState();
+}
+
+class _ApiEditionPickerScreenState extends State<_ApiEditionPickerScreen> {
+  List<ApiEdition>? _editions;
+  bool _loading = true;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEditions();
+  }
+
+  Future<void> _loadEditions() async {
+    final editions = await AlQuranCloudService.fetchEditions();
+    if (mounted) {
+      setState(() {
+        _editions = editions;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _editions?.where((e) {
+      if (_query.isEmpty) return true;
+      return e.englishName.toLowerCase().contains(_query.toLowerCase()) ||
+          e.language.toLowerCase().contains(_query.toLowerCase()) ||
+          e.name.toLowerCase().contains(_query.toLowerCase());
+    }).toList();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Select Translation')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search by language or name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                isDense: true,
+              ),
+              onChanged: (v) => setState(() => _query = v.trim()),
+            ),
+          ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _editions == null
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Text(
+                            'Could not load editions.\nCheck your internet connection.',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount:
+                            (widget.showNone ? 1 : 0) + (filtered?.length ?? 0),
+                        itemBuilder: (context, index) {
+                          if (widget.showNone && index == 0) {
+                            return ListTile(
+                              leading: Icon(
+                                widget.current == 'none'
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                color: widget.current == 'none'
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                              title: const Text('None (disabled)'),
+                              onTap: () => Navigator.of(context).pop('none'),
+                            );
+                          }
+                          final edition =
+                              filtered![index - (widget.showNone ? 1 : 0)];
+                          final isSelected =
+                              edition.identifier == widget.current;
+                          return ListTile(
+                            leading: Icon(
+                              isSelected
+                                  ? Icons.check_circle
+                                  : Icons.circle_outlined,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                            title: Text(edition.englishName),
+                            subtitle: Text(
+                                '${edition.language} · ${edition.identifier}'),
+                            onTap: () =>
+                                Navigator.of(context).pop(edition.identifier),
+                          );
+                        },
+                      ),
           ),
         ],
       ),

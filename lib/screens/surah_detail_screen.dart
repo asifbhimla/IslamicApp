@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:quran/quran.dart' as quran;
 
 import '../app_state.dart';
+import '../services/alquran_cloud_service.dart';
 import '../widgets/app_background.dart';
 import '../widgets/quran_audio_player.dart';
 
@@ -108,6 +109,52 @@ class _VerseRowState extends State<_VerseRow> {
   bool _playing = false;
   bool _loading = false;
 
+  String? _apiTranslation;
+  String? _apiSecondaryTranslation;
+  bool _apiFetching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchApiTranslations();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VerseRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.surahNumber != widget.surahNumber ||
+        oldWidget.verseNumber != widget.verseNumber) {
+      _fetchApiTranslations();
+    }
+  }
+
+  Future<void> _fetchApiTranslations() async {
+    final state = context.read<AppState>();
+    if (!state.useAlQuranCloudApi) return;
+
+    setState(() => _apiFetching = true);
+    final primary = await AlQuranCloudService.fetchVerseTranslation(
+      widget.surahNumber,
+      widget.verseNumber,
+      state.apiPrimaryEdition,
+    );
+    String? secondary;
+    if (state.apiSecondaryEdition != 'none') {
+      secondary = await AlQuranCloudService.fetchVerseTranslation(
+        widget.surahNumber,
+        widget.verseNumber,
+        state.apiSecondaryEdition,
+      );
+    }
+    if (mounted) {
+      setState(() {
+        _apiTranslation = primary;
+        _apiSecondaryTranslation = secondary;
+        _apiFetching = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _versePlayer?.dispose();
@@ -141,8 +188,17 @@ class _VerseRowState extends State<_VerseRow> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final secondary = context.select<AppState, TranslationOption?>(
-        (state) => state.secondaryTranslation);
+    final state = context.watch<AppState>();
+    final useApi = state.useAlQuranCloudApi;
+    final secondary = state.secondaryTranslation;
+
+    final primaryTranslation = useApi
+        ? (_apiTranslation ??
+            quran.getVerseTranslation(
+                widget.surahNumber, widget.verseNumber))
+        : quran.getVerseTranslation(
+            widget.surahNumber, widget.verseNumber);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -187,14 +243,34 @@ class _VerseRowState extends State<_VerseRow> {
           ],
         ),
         const SizedBox(height: 8),
+        if (_apiFetching && useApi)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: LinearProgressIndicator(
+              minHeight: 2,
+              color: theme.colorScheme.primary,
+            ),
+          ),
         Text(
-          '${widget.verseNumber}. ${quran.getVerseTranslation(widget.surahNumber, widget.verseNumber)}',
+          '${widget.verseNumber}. $primaryTranslation',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             height: 1.5,
           ),
         ),
-        if (secondary != null) ...[
+        if (useApi && state.apiSecondaryEdition != 'none') ...[
+          const SizedBox(height: 6),
+          Text(
+            _apiSecondaryTranslation ??
+                quran.getVerseTranslation(
+                    widget.surahNumber, widget.verseNumber),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              height: 1.5,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ] else if (!useApi && secondary != null) ...[
           const SizedBox(height: 6),
           Text(
             quran.getVerseTranslation(

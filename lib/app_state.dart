@@ -90,6 +90,9 @@ class AppState extends ChangeNotifier {
   bool athanNotificationsEnabled = true;
   double quranArabicFontSize = 26;
   String secondaryTranslationKey = 'none';
+  bool useAlQuranCloudApi = false;
+  String apiPrimaryEdition = 'en.sahih';
+  String apiSecondaryEdition = 'none';
 
   TranslationOption? get secondaryTranslation {
     if (secondaryTranslationKey == 'none') return null;
@@ -115,6 +118,11 @@ class AppState extends ChangeNotifier {
         prefs.getDouble('quranArabicFontSize') ?? quranArabicFontSize;
     secondaryTranslationKey =
         prefs.getString('secondaryTranslation') ?? secondaryTranslationKey;
+    useAlQuranCloudApi = prefs.getBool('useAlQuranCloudApi') ?? false;
+    apiPrimaryEdition =
+        prefs.getString('apiPrimaryEdition') ?? apiPrimaryEdition;
+    apiSecondaryEdition =
+        prefs.getString('apiSecondaryEdition') ?? apiSecondaryEdition;
     notifyListeners();
   }
 
@@ -130,6 +138,9 @@ class AppState extends ChangeNotifier {
         'athanNotificationsEnabled', athanNotificationsEnabled);
     await prefs.setDouble('quranArabicFontSize', quranArabicFontSize);
     await prefs.setString('secondaryTranslation', secondaryTranslationKey);
+    await prefs.setBool('useAlQuranCloudApi', useAlQuranCloudApi);
+    await prefs.setString('apiPrimaryEdition', apiPrimaryEdition);
+    await prefs.setString('apiSecondaryEdition', apiSecondaryEdition);
   }
 
   CalculationMethodOption get calculationMethod => calculationMethods
@@ -211,6 +222,24 @@ class AppState extends ChangeNotifier {
 
   Future<void> setSecondaryTranslation(String key) async {
     secondaryTranslationKey = key;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setUseAlQuranCloudApi(bool value) async {
+    useAlQuranCloudApi = value;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setApiPrimaryEdition(String value) async {
+    apiPrimaryEdition = value;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setApiSecondaryEdition(String value) async {
+    apiSecondaryEdition = value;
     notifyListeners();
     await _save();
   }

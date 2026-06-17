@@ -22,6 +22,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Timer? _ticker;
   DailyAyah? _dailyAyah;
+  bool _lastUseApi = false;
+  String _lastApiEdition = '';
+  String _lastApiSecondaryEdition = '';
 
   @override
   void initState() {
@@ -29,11 +32,30 @@ class _HomeScreenState extends State<HomeScreen> {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
-    _loadDailyAyah();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final state = context.read<AppState>();
+    if (_dailyAyah == null ||
+        _lastUseApi != state.useAlQuranCloudApi ||
+        _lastApiEdition != state.apiPrimaryEdition ||
+        _lastApiSecondaryEdition != state.apiSecondaryEdition) {
+      _lastUseApi = state.useAlQuranCloudApi;
+      _lastApiEdition = state.apiPrimaryEdition;
+      _lastApiSecondaryEdition = state.apiSecondaryEdition;
+      _loadDailyAyah();
+    }
   }
 
   Future<void> _loadDailyAyah() async {
-    final ayah = await DailyAyahService.getToday();
+    final state = context.read<AppState>();
+    final ayah = await DailyAyahService.getToday(
+      useApi: state.useAlQuranCloudApi,
+      apiEdition: state.apiPrimaryEdition,
+      apiSecondaryEdition: state.apiSecondaryEdition,
+    );
     if (mounted) setState(() => _dailyAyah = ayah);
   }
 
@@ -311,7 +333,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 1.5,
                       ),
                     ),
-                    if (state.secondaryTranslation != null) ...[
+                    if (state.useAlQuranCloudApi &&
+                        _dailyAyah!.secondaryTranslation != null) ...[
+                      const Divider(height: 20),
+                      Text(
+                        _dailyAyah!.secondaryTranslation!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ] else if (!state.useAlQuranCloudApi &&
+                        state.secondaryTranslation != null) ...[
                       const Divider(height: 20),
                       Text(
                         state.secondaryTranslation!.label,
