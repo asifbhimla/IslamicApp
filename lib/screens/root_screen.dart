@@ -76,7 +76,7 @@ class _NotchedNavBar extends StatelessWidget {
     final bottomSafe = MediaQuery.of(context).padding.bottom;
 
     return SizedBox(
-      height: 86 + bottomSafe,
+      height: 96 + bottomSafe,
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         child: CustomPaint(
@@ -123,7 +123,7 @@ class _NotchedNavBar extends StatelessWidget {
       child: Align(
         alignment: isCenter ? Alignment.bottomCenter : Alignment.center,
         child: Padding(
-          padding: EdgeInsets.only(bottom: isCenter ? 8 : 16),
+          padding: EdgeInsets.only(bottom: isCenter ? 14 : 18),
           child: content,
         ),
       ),
@@ -136,7 +136,7 @@ class _NotchedBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const notchRadius = 40.0;
+    const notchRadius = 38.0;
     final guest = Rect.fromCircle(
       center: Offset(size.width / 2, 0),
       radius: notchRadius,

@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
-                fontWeight: FontWeight.w300,
+                fontWeight: FontWeight.bold,
                 letterSpacing: 2,
               ),
             ),
