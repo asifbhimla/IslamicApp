@@ -71,6 +71,32 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 48, 16, 16),
           children: [
+          Row(
+            children: [
+              const Icon(Icons.place, color: Colors.white70, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  state.locationLabel,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${hijri.toFormat('dd MMMM yyyy')} AH',
+            style: theme.textTheme.titleMedium
+                ?.copyWith(color: Colors.white),
+          ),
+          Text(
+            DateFormat('EEEE, d MMMM yyyy').format(now),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: Colors.white70),
+          ),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -88,17 +114,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${hijri.toFormat('dd MMMM yyyy')} AH',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: Colors.white),
-                ),
-                Text(
-                  DateFormat('EEEE, d MMMM yyyy').format(now),
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: Colors.white70),
-                ),
-                const SizedBox(height: 16),
                 Text(
                   'Next prayer: ${next.name}',
                   style: theme.textTheme.titleLarge?.copyWith(
@@ -119,21 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       'in ${_countdownTo(next.time)}',
                       style: theme.textTheme.titleMedium
                           ?.copyWith(color: Colors.white),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.place, color: Colors.white70, size: 18),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        state.locationLabel,
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: Colors.white70),
-                        overflow: TextOverflow.ellipsis,
-                      ),
                     ),
                   ],
                 ),
