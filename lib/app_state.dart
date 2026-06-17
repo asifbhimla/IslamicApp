@@ -1,7 +1,39 @@
 import 'package:adhan_dart/adhan_dart.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hijri/hijri_calendar.dart';
+import 'package:intl/intl.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// A region/locale option that drives date and time formatting.
+class RegionOption {
+  const RegionOption(this.key, this.label);
+
+  /// Locale string such as 'en_US'. An empty key means "device default".
+  final String key;
+  final String label;
+}
+
+const List<RegionOption> regionOptions = [
+  RegionOption('', 'Device default'),
+  RegionOption('en_US', 'United States — English'),
+  RegionOption('en_GB', 'United Kingdom — English'),
+  RegionOption('en_CA', 'Canada — English'),
+  RegionOption('en_AU', 'Australia — English'),
+  RegionOption('en_IN', 'India — English'),
+  RegionOption('en_PK', 'Pakistan — English'),
+  RegionOption('ar_SA', 'Saudi Arabia — العربية'),
+  RegionOption('ar_AE', 'United Arab Emirates — العربية'),
+  RegionOption('ar_EG', 'Egypt — العربية'),
+  RegionOption('tr_TR', 'Türkiye — Türkçe'),
+  RegionOption('id_ID', 'Indonesia — Bahasa Indonesia'),
+  RegionOption('ms_MY', 'Malaysia — Bahasa Melayu'),
+  RegionOption('ur_PK', 'Pakistan — اردو'),
+  RegionOption('bn_BD', 'Bangladesh — বাংলা'),
+  RegionOption('fr_FR', 'France — Français'),
+  RegionOption('de_DE', 'Germany — Deutsch'),
+  RegionOption('ru_RU', 'Russia — Русский'),
+];
 
 /// Translation language options for the Quran.
 class TranslationOption {
@@ -94,6 +126,37 @@ class AppState extends ChangeNotifier {
   String apiPrimaryEdition = 'en.sahih';
   String apiSecondaryEdition = 'none';
 
+  /// Selected region. Empty string means "follow the device locale".
+  String regionKey = '';
+
+  /// The device's locale string (e.g. 'en_US'), set once at startup. Used as
+  /// the effective locale when [regionKey] is empty.
+  String deviceLocale = 'en_US';
+
+  RegionOption get region => regionOptions.firstWhere(
+      (r) => r.key == regionKey,
+      orElse: () => regionOptions.first);
+
+  /// The locale used for all date/number formatting.
+  String get effectiveLocale =>
+      regionKey.isEmpty ? deviceLocale : regionKey;
+
+  /// Hijri calendar language, derived from the effective locale. The hijri
+  /// package only ships 'en', 'ar' and 'tr' month/day names.
+  String get _hijriLanguage {
+    final lang = effectiveLocale.split(RegExp('[_-]')).first;
+    if (lang == 'ar') return 'ar';
+    if (lang == 'tr') return 'tr';
+    return 'en';
+  }
+
+  /// Apply the effective locale to the global formatting state. Safe to call
+  /// repeatedly (e.g. on startup and whenever the region changes).
+  void applyLocale() {
+    Intl.defaultLocale = effectiveLocale;
+    HijriCalendar.setLocal(_hijriLanguage);
+  }
+
   TranslationOption? get secondaryTranslation {
     if (secondaryTranslationKey == 'none') return null;
     return translationOptions.firstWhere(
@@ -123,6 +186,8 @@ class AppState extends ChangeNotifier {
         prefs.getString('apiPrimaryEdition') ?? apiPrimaryEdition;
     apiSecondaryEdition =
         prefs.getString('apiSecondaryEdition') ?? apiSecondaryEdition;
+    regionKey = prefs.getString('regionKey') ?? regionKey;
+    applyLocale();
     notifyListeners();
   }
 
@@ -141,6 +206,7 @@ class AppState extends ChangeNotifier {
     await prefs.setBool('useAlQuranCloudApi', useAlQuranCloudApi);
     await prefs.setString('apiPrimaryEdition', apiPrimaryEdition);
     await prefs.setString('apiSecondaryEdition', apiSecondaryEdition);
+    await prefs.setString('regionKey', regionKey);
   }
 
   CalculationMethodOption get calculationMethod => calculationMethods
@@ -240,6 +306,13 @@ class AppState extends ChangeNotifier {
 
   Future<void> setApiSecondaryEdition(String value) async {
     apiSecondaryEdition = value;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setRegion(String key) async {
+    regionKey = key;
+    applyLocale();
     notifyListeners();
     await _save();
   }

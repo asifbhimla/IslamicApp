@@ -1,4 +1,7 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'app_state.dart';
@@ -7,8 +10,13 @@ import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting();
 
   final appState = AppState();
+  final deviceLocale = ui.PlatformDispatcher.instance.locale;
+  appState.deviceLocale = deviceLocale.countryCode == null
+      ? deviceLocale.languageCode
+      : '${deviceLocale.languageCode}_${deviceLocale.countryCode}';
   await appState.load();
   try {
     await NotificationService.init();

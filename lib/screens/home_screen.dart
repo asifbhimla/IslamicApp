@@ -85,7 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final fajrTime = entries.firstWhere((e) => e.name == 'Fajr').time;
     final maghribTime = entries.firstWhere((e) => e.name == 'Maghrib').time;
     final hijri = HijriCalendar.now();
-    final timeFormat = DateFormat('h:mm a');
+    final locale = state.effectiveLocale;
+    final timeFormat = DateFormat.jm(locale);
 
     // Calculate countdown progress (fraction of time elapsed since previous prayer)
     final obligatoryToday = entries.where((e) => e.isObligatory).toList();
@@ -162,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ?.copyWith(color: Colors.white),
           ),
           Text(
-            DateFormat('EEEE, d MMMM yyyy').format(now),
+            DateFormat.yMMMMEEEEd(locale).format(now),
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: Colors.white70),
           ),

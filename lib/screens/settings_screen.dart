@@ -1,5 +1,6 @@
 import 'package:adhan_dart/adhan_dart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../app_state.dart';
@@ -91,6 +92,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: _locating ? null : _updateLocation,
                 ),
               ],
+            ),
+          ),
+          const _SectionHeader('Region & date format'),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            child: ListTile(
+              leading: const Icon(Icons.public),
+              title: const Text('Region'),
+              subtitle: Text(
+                '${state.region.label}\n'
+                '${_regionPreview(state.effectiveLocale)}',
+              ),
+              isThreeLine: true,
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _pickRegion(context, state),
             ),
           ),
           const _SectionHeader('Prayer times'),
@@ -209,6 +225,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       ),
     );
+  }
+
+  String _regionPreview(String locale) {
+    final now = DateTime.now();
+    return '${DateFormat.yMMMMd(locale).format(now)} · '
+        '${DateFormat.jm(locale).format(now)}';
+  }
+
+  Future<void> _pickRegion(BuildContext context, AppState state) async {
+    final key = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Region'),
+        children: [
+          for (final option in regionOptions)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(option.key),
+              child: Row(
+                children: [
+                  if (option.key == state.regionKey)
+                    const Icon(Icons.check, size: 20)
+                  else
+                    const SizedBox(width: 20),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(option.label)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (key == null) return;
+    await state.setRegion(key);
   }
 
   Future<void> _pickSecondaryTranslation(

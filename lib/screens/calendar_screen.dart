@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../app_state.dart';
 import '../data/islamic_events.dart';
 import '../widgets/app_background.dart';
 
@@ -56,6 +58,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final locale = context.watch<AppState>().effectiveLocale;
     final today = HijriCalendar.now();
     final daysInMonth = _converter.getDaysInMonth(_hijriYear, _hijriMonth);
     final firstDayGregorian =
@@ -94,7 +97,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text(
-                    _gregorianRangeLabel(daysInMonth),
+                    _gregorianRangeLabel(daysInMonth, locale),
                     style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
                   ),
                 ],
@@ -175,7 +178,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                     Text(
-                      DateFormat('d/M').format(gregorian),
+                      DateFormat.Md(locale).format(gregorian),
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontSize: 9,
                         color: isToday
@@ -213,7 +216,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                       title: Text(event.name),
                       subtitle: Text(
-                        DateFormat('EEEE, d MMMM yyyy').format(
+                        DateFormat.yMMMMEEEEd(locale).format(
                           _converter.hijriToGregorian(
                               _hijriYear, _hijriMonth, event.day),
                         ),
@@ -235,7 +238,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     title: Text(upcoming.$1.name),
                     subtitle: Text(
                       '${upcoming.$1.day} ${_monthNames[upcoming.$1.month - 1]} ${upcoming.$2} AH · '
-                      '${DateFormat('d MMM yyyy').format(upcoming.$3)}',
+                      '${DateFormat.yMMMd(locale).format(upcoming.$3)}',
                     ),
                   ),
               ],
@@ -254,11 +257,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  String _gregorianRangeLabel(int daysInMonth) {
+  String _gregorianRangeLabel(int daysInMonth, String locale) {
     final start = _converter.hijriToGregorian(_hijriYear, _hijriMonth, 1);
     final end =
         _converter.hijriToGregorian(_hijriYear, _hijriMonth, daysInMonth);
-    final format = DateFormat('d MMM yyyy');
+    final format = DateFormat.yMMMd(locale);
     return '${format.format(start)} – ${format.format(end)}';
   }
 
