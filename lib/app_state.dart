@@ -271,6 +271,27 @@ class AppState extends ChangeNotifier {
     return PrayerEntry('Fajr', tomorrow.fajr.toLocal());
   }
 
+  /// The current (most recently started) obligatory prayer relative to [now].
+  /// Before today's Fajr this is yesterday's Isha.
+  PrayerEntry currentPrayer({DateTime? now}) {
+    now ??= DateTime.now();
+    final today =
+        prayerEntriesFor(now).where((e) => e.isObligatory).toList();
+    PrayerEntry? current;
+    for (final entry in today) {
+      if (!entry.time.isAfter(now)) {
+        current = entry;
+      } else {
+        break;
+      }
+    }
+    if (current != null) return current;
+    final yesterday = now.subtract(const Duration(days: 1));
+    final yesterdayEntries =
+        prayerEntriesFor(yesterday).where((e) => e.isObligatory).toList();
+    return yesterdayEntries.last;
+  }
+
   Future<void> setLocation(double lat, double lng, String label) async {
     latitude = lat;
     longitude = lng;

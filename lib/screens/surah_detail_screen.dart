@@ -1,9 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:quran/quran.dart' as quran;
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../app_state.dart';
 import '../services/alquran_cloud_service.dart';
@@ -30,75 +29,34 @@ class SurahDetailScreen extends StatefulWidget {
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   int? _playingVerse;
   int? _landingVerse;
-  final Map<int, GlobalKey> _verseKeys = {};
-  final ScrollController _scrollController = ScrollController();
+  final ItemScrollController _itemScrollController = ItemScrollController();
 
   @override
   void initState() {
     super.initState();
     final initial = widget.initialVerse;
     if (initial != null && initial > 1) {
+      // The list opens already positioned at this verse; highlight it briefly
+      // as a visual cue, then clear the highlight.
       _landingVerse = initial;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToVerse(initial));
+      Future<void>.delayed(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _landingVerse = null);
+      });
     }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  /// Scroll to a verse that may not be built yet by advancing the list in
-  /// steps until the target row is laid out, then centring it.
-  Future<void> _jumpToVerse(int verse) async {
-    for (var attempt = 0; attempt < 40; attempt++) {
-      if (!mounted) return;
-      final ctx = _verseKeys[verse]?.currentContext;
-      if (ctx != null && ctx.mounted) {
-        await Scrollable.ensureVisible(
-          ctx,
-          alignment: 0.15,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        break;
-      }
-      if (!_scrollController.hasClients) {
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-        continue;
-      }
-      final position = _scrollController.position;
-      if (position.pixels >= position.maxScrollExtent) break;
-      await _scrollController.animateTo(
-        math.min(position.pixels + position.viewportDimension * 0.85,
-            position.maxScrollExtent),
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.linear,
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-    }
-    if (!mounted) return;
-    // Clear the landing highlight after a moment so it is just a visual cue.
-    await Future<void>.delayed(const Duration(seconds: 3));
-    if (mounted) setState(() => _landingVerse = null);
   }
 
   void _onPlayingVerseChanged(int? verse) {
     if (!mounted || verse == _playingVerse) return;
     setState(() => _playingVerse = verse);
     if (verse == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _verseKeys[verse]?.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          alignment: 0.3,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
+    if (_itemScrollController.isAttached) {
+      _itemScrollController.scrollTo(
+        index: verse,
+        alignment: 0.3,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -109,6 +67,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         .select<AppState, double>((state) => state.quranArabicFontSize);
     final verseCount = quran.getVerseCount(surahNumber);
     final showBasmala = surahNumber != 1 && surahNumber != 9;
+    // List index 0 is the header, so verse N is at index N.
+    final initialIndex = widget.initialVerse ?? 0;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -135,8 +95,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
+            child: ScrollablePositionedList.builder(
+              itemScrollController: _itemScrollController,
+              initialScrollIndex: initialIndex,
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
               itemCount: verseCount + 1,
               itemBuilder: (context, index) {
@@ -178,7 +139,6 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                 final highlighted =
                     _playingVerse == verse || _landingVerse == verse;
                 return Card(
-                  key: _verseKeys.putIfAbsent(verse, () => GlobalKey()),
                   margin: const EdgeInsets.only(bottom: 10),
                   color:
                       highlighted ? theme.colorScheme.primaryContainer : null,

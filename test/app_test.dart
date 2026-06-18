@@ -63,6 +63,22 @@ void main() {
       expect(qibla, lessThan(130));
     });
 
+    test('current prayer is the one in progress, distinct from next', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final entries = state
+          .prayerEntriesFor(DateTime(2026, 6, 10))
+          .where((e) => e.isObligatory)
+          .toList();
+      final dhuhr = entries.firstWhere((e) => e.name == 'Dhuhr').time;
+      final now = dhuhr.add(const Duration(minutes: 1));
+
+      expect(state.currentPrayer(now: now).name, 'Dhuhr');
+      expect(state.nextPrayer(now: now).name, 'Asr');
+    });
+
     test('Hanafi madhab gives a later Asr', () async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();

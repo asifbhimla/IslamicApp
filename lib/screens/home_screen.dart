@@ -81,6 +81,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final now = DateTime.now();
     final next = state.nextPrayer(now: now);
+    final current = state.currentPrayer(now: now);
+    // Keep the current prayer on the tile until 30 minutes before the next
+    // prayer starts, then switch the tile to the next prayer. The ring timer
+    // always counts down to the next prayer.
+    final showNext = next.time.difference(now) <= const Duration(minutes: 30);
+    final tilePrayer = showNext ? next : current;
+    final tileLabel = showNext ? 'Next Prayer' : 'Current Prayer';
     final entries = state.prayerEntriesFor(now);
     final fajrTime = entries.firstWhere((e) => e.name == 'Fajr').time;
     final maghribTime = entries.firstWhere((e) => e.name == 'Maghrib').time;
@@ -189,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Next Prayer : ${next.name}',
+                        '$tileLabel : ${tilePrayer.name}',
                         style: theme.textTheme.titleMedium?.copyWith(
                             color: Colors.white, fontWeight: FontWeight.bold),
                       ),
@@ -199,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            timeFormat.format(next.time),
+                            timeFormat.format(tilePrayer.time),
                             style: theme.textTheme.headlineSmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
