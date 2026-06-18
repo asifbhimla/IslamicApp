@@ -67,6 +67,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _converter.hijriToGregorian(_hijriYear, _hijriMonth, 1);
     // Grid columns run Sunday..Saturday.
     final leadingBlanks = firstDayGregorian.weekday % 7;
+    final weekCount = ((leadingBlanks + daysInMonth) / 7).ceil();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -137,85 +138,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 7,
-                        childAspectRatio: 0.92,
+                    for (var week = 0; week < weekCount; week++)
+                      Row(
+                        children: [
+                          for (var col = 0; col < 7; col++)
+                            Expanded(
+                              child: Builder(builder: (context) {
+                                final cellIndex = week * 7 + col;
+                                final day = cellIndex - leadingBlanks + 1;
+                                if (cellIndex < leadingBlanks ||
+                                    day > daysInMonth) {
+                                  return const SizedBox(height: 52);
+                                }
+                                return _dayCell(
+                                    theme, locale, day, today, firstDayGregorian);
+                              }),
+                            ),
+                        ],
                       ),
-                      itemCount: leadingBlanks + daysInMonth,
-                      itemBuilder: (context, index) {
-                        if (index < leadingBlanks) {
-                          return const SizedBox.shrink();
-                        }
-                        final day = index - leadingBlanks + 1;
-                        final gregorian =
-                            firstDayGregorian.add(Duration(days: day - 1));
-                        final isToday = today.hYear == _hijriYear &&
-                            today.hMonth == _hijriMonth &&
-                            today.hDay == day;
-                        final isSelected = _selectedDay == day;
-                        final event = eventOn(_hijriMonth, day);
-                        final dayColor = isToday
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurface;
-
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedDay = day),
-                          child: Container(
-                            margin: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: isToday ? theme.colorScheme.primary : null,
-                              borderRadius: BorderRadius.circular(10),
-                              border: isSelected && !isToday
-                                  ? Border.all(
-                                      color: theme.colorScheme.primary,
-                                      width: 1.5)
-                                  : null,
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '$day',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: dayColor,
-                                    fontWeight: isToday || event != null
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                                Text(
-                                  DateFormat.Md(locale).format(gregorian),
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    fontSize: 9,
-                                    color: isToday
-                                        ? theme.colorScheme.onPrimary
-                                            .withValues(alpha: 0.85)
-                                        : theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: event != null
-                                        ? (isToday
-                                            ? theme.colorScheme.onPrimary
-                                            : theme.colorScheme.primary)
-                                        : Colors.transparent,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -250,6 +190,69 @@ class _CalendarScreenState extends State<CalendarScreen> {
               'may differ by a day from local moon sighting.',
               style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _dayCell(ThemeData theme, String locale, int day, HijriCalendar today,
+      DateTime firstDayGregorian) {
+    final gregorian = firstDayGregorian.add(Duration(days: day - 1));
+    final isToday = today.hYear == _hijriYear &&
+        today.hMonth == _hijriMonth &&
+        today.hDay == day;
+    final isSelected = _selectedDay == day;
+    final event = eventOn(_hijriMonth, day);
+    final dayColor =
+        isToday ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedDay = day),
+      child: Container(
+        height: 48,
+        margin: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: isToday ? theme.colorScheme.primary : null,
+          borderRadius: BorderRadius.circular(10),
+          border: isSelected && !isToday
+              ? Border.all(color: theme.colorScheme.primary, width: 1.5)
+              : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '$day',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: dayColor,
+                fontWeight: isToday || event != null
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
+            ),
+            Text(
+              DateFormat.Md(locale).format(gregorian),
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 9,
+                color: isToday
+                    ? theme.colorScheme.onPrimary.withValues(alpha: 0.85)
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: event != null
+                    ? (isToday
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.primary)
+                    : Colors.transparent,
+              ),
             ),
           ],
         ),
