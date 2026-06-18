@@ -316,6 +316,23 @@ class AppState extends ChangeNotifier {
     return (prayer: next, isCurrent: false);
   }
 
+  /// The name of the prayer/period chip to highlight: the most recent entry
+  /// (including Sunrise) whose time has begun. So Fajr is highlighted from its
+  /// start until sunrise, Sunrise until Dhuhr, and so on. Before today's Fajr,
+  /// Isha (carried over from the night) is highlighted.
+  String selectedPrayerName({DateTime? now}) {
+    now ??= DateTime.now();
+    PrayerEntry? started;
+    for (final entry in prayerEntriesFor(now)) {
+      if (!entry.time.isAfter(now)) {
+        started = entry;
+      } else {
+        break;
+      }
+    }
+    return started?.name ?? 'Isha';
+  }
+
   Future<void> setLocation(double lat, double lng, String label) async {
     latitude = lat;
     longitude = lng;

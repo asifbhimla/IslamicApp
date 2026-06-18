@@ -87,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final tile = state.homeTilePrayer(now: now);
     final tilePrayer = tile.prayer;
     final tileLabel = tile.isCurrent ? 'Current Prayer' : 'Next Prayer';
+    final selectedName = state.selectedPrayerName(now: now);
     final entries = state.prayerEntriesFor(now);
     final fajrTime = entries.firstWhere((e) => e.name == 'Fajr').time;
     final maghribTime = entries.firstWhere((e) => e.name == 'Maghrib').time;
@@ -244,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Time',
+                            'Time left',
                             style: theme.textTheme.labelSmall
                                 ?.copyWith(color: Colors.white70, fontSize: 10),
                           ),
@@ -257,9 +258,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Text(
-                            'Left',
-                            style: theme.textTheme.labelSmall
-                                ?.copyWith(color: Colors.white70, fontSize: 10),
+                            'for ${next.name}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
@@ -275,50 +279,52 @@ class _HomeScreenState extends State<HomeScreen> {
               for (int i = 0; i < entries.length; i++) ...[
                 if (i > 0) const SizedBox(width: 6),
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: entries[i].name == next.name
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _iconFor(entries[i].name),
-                          size: 16,
-                          color: entries[i].name == next.name
-                              ? theme.colorScheme.primary
-                              : Colors.white,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          entries[i].name,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: entries[i].name == next.name
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: entries[i].name == next.name
+                  child: Builder(builder: (context) {
+                    final selected = entries[i].name == selectedName;
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _iconFor(entries[i].name),
+                            size: 16,
+                            color: selected
                                 ? theme.colorScheme.primary
                                 : Colors.white,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          timeFormat.format(entries[i].time),
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: entries[i].name == next.name
-                                ? theme.colorScheme.primary
-                                : Colors.white70,
+                          const SizedBox(height: 2),
+                          Text(
+                            entries[i].name,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight:
+                                  selected ? FontWeight.bold : FontWeight.w500,
+                              color: selected
+                                  ? theme.colorScheme.primary
+                                  : Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
+                          Text(
+                            timeFormat.format(entries[i].time),
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: selected
+                                  ? theme.colorScheme.primary
+                                  : Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ),
               ],
             ],

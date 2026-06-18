@@ -122,6 +122,33 @@ void main() {
       expect(tile.isCurrent, isFalse);
     });
 
+    test('selected prayer chip tracks the current period, not the next', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final date = DateTime(2026, 6, 10);
+      final times = state.prayerTimesFor(date);
+      final fajr = times.fajr.toLocal();
+      final sunrise = times.sunrise.toLocal();
+      final entries =
+          state.prayerEntriesFor(date).where((e) => e.isObligatory).toList();
+      final dhuhr = entries.firstWhere((e) => e.name == 'Dhuhr').time;
+      final asr = entries.firstWhere((e) => e.name == 'Asr').time;
+
+      expect(state.selectedPrayerName(now: fajr.add(const Duration(minutes: 5))),
+          'Fajr');
+      expect(
+          state.selectedPrayerName(now: sunrise.add(const Duration(minutes: 5))),
+          'Sunrise');
+      expect(state.selectedPrayerName(now: dhuhr.add(const Duration(minutes: 5))),
+          'Dhuhr');
+      // 20 minutes before Asr the chip should still be Dhuhr (current period).
+      expect(
+          state.selectedPrayerName(now: asr.subtract(const Duration(minutes: 20))),
+          'Dhuhr');
+    });
+
     test('Hanafi madhab gives a later Asr', () async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();
