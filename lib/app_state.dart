@@ -294,46 +294,26 @@ class AppState extends ChangeNotifier {
 
   /// What the home tile should display relative to [now].
   ///
-  /// A prayer takes over the tile as the "current" prayer 30 minutes before
-  /// its start time and stays current until the next prayer takes over (also
-  /// 30 minutes before that prayer). Fajr is the exception: its current window
-  /// ends at sunrise, after which the tile shows the next prayer (Dhuhr) as
-  /// the upcoming one until Dhuhr's own window begins.
+  /// A prayer is shown as "current" from its start time until its switch point,
+  /// after which the next prayer is shown as "next". The switch point is 30
+  /// minutes before the next prayer starts — except for Fajr, whose switch
+  /// point is sunrise.
   ({PrayerEntry prayer, bool isCurrent}) homeTilePrayer({DateTime? now}) {
     now ??= DateTime.now();
-    const lead = Duration(minutes: 30);
-    final obligatory =
-        prayerEntriesFor(now).where((e) => e.isObligatory).toList();
+    final current = currentPrayer(now: now);
+    final next = nextPrayer(now: now);
 
-    PrayerEntry? displayed;
-    for (final entry in obligatory) {
-      if (!entry.time.subtract(lead).isAfter(now)) {
-        displayed = entry;
-      } else {
-        break;
-      }
+    final DateTime switchPoint;
+    if (current.name == 'Fajr') {
+      switchPoint = prayerTimesFor(now).sunrise.toLocal();
+    } else {
+      switchPoint = next.time.subtract(const Duration(minutes: 30));
     }
 
-    // Before today's Fajr window has begun — yesterday's Isha is still current.
-    if (displayed == null) {
-      final yesterday = now.subtract(const Duration(days: 1));
-      final yesterdayEntries =
-          prayerEntriesFor(yesterday).where((e) => e.isObligatory).toList();
-      return (prayer: yesterdayEntries.last, isCurrent: true);
+    if (now.isBefore(switchPoint)) {
+      return (prayer: current, isCurrent: true);
     }
-
-    // Fajr exception: once sunrise passes, switch to the next prayer (Dhuhr).
-    if (displayed.name == 'Fajr') {
-      final sunrise = prayerTimesFor(now).sunrise.toLocal();
-      if (!now.isBefore(sunrise)) {
-        return (
-          prayer: obligatory.firstWhere((e) => e.name == 'Dhuhr'),
-          isCurrent: false,
-        );
-      }
-    }
-
-    return (prayer: displayed, isCurrent: true);
+    return (prayer: next, isCurrent: false);
   }
 
   Future<void> setLocation(double lat, double lng, String label) async {

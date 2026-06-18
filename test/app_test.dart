@@ -79,36 +79,47 @@ void main() {
       expect(state.nextPrayer(now: now).name, 'Asr');
     });
 
-    test('home tile shows Fajr current pre-dawn, Dhuhr next after sunrise',
-        () async {
+    test('home tile follows the current/next 30-minute schedule', () async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();
       await state.load();
 
-      final times = state.prayerTimesFor(DateTime(2026, 6, 10));
+      final date = DateTime(2026, 6, 10);
+      final times = state.prayerTimesFor(date);
       final fajr = times.fajr.toLocal();
       final sunrise = times.sunrise.toLocal();
+      final entries =
+          state.prayerEntriesFor(date).where((e) => e.isObligatory).toList();
+      final dhuhr = entries.firstWhere((e) => e.name == 'Dhuhr').time;
+      final asr = entries.firstWhere((e) => e.name == 'Asr').time;
 
-      // 20 minutes before Fajr: Fajr is the current prayer.
-      var tile =
-          state.homeTilePrayer(now: fajr.subtract(const Duration(minutes: 20)));
+      ({PrayerEntry prayer, bool isCurrent}) at(DateTime t) =>
+          state.homeTilePrayer(now: t);
+
+      // 20 min before Fajr -> Next : Fajr
+      var tile = at(fajr.subtract(const Duration(minutes: 20)));
+      expect(tile.prayer.name, 'Fajr');
+      expect(tile.isCurrent, isFalse);
+
+      // After Fajr, before sunrise -> Current : Fajr
+      tile = at(fajr.add(const Duration(minutes: 5)));
       expect(tile.prayer.name, 'Fajr');
       expect(tile.isCurrent, isTrue);
 
-      // Just after sunrise: tile flips to Dhuhr as the next prayer.
-      tile = state.homeTilePrayer(now: sunrise.add(const Duration(minutes: 5)));
+      // After sunrise -> Next : Dhuhr
+      tile = at(sunrise.add(const Duration(minutes: 5)));
       expect(tile.prayer.name, 'Dhuhr');
       expect(tile.isCurrent, isFalse);
 
-      // 20 minutes before Dhuhr: Dhuhr becomes the current prayer.
-      final dhuhr = state
-          .prayerEntriesFor(DateTime(2026, 6, 10))
-          .firstWhere((e) => e.name == 'Dhuhr')
-          .time;
-      tile = state
-          .homeTilePrayer(now: dhuhr.subtract(const Duration(minutes: 20)));
+      // After Dhuhr -> Current : Dhuhr
+      tile = at(dhuhr.add(const Duration(minutes: 5)));
       expect(tile.prayer.name, 'Dhuhr');
       expect(tile.isCurrent, isTrue);
+
+      // 20 min before Asr -> Next : Asr
+      tile = at(asr.subtract(const Duration(minutes: 20)));
+      expect(tile.prayer.name, 'Asr');
+      expect(tile.isCurrent, isFalse);
     });
 
     test('Hanafi madhab gives a later Asr', () async {
