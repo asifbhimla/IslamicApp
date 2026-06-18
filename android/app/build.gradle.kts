@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.asifbhimla.islamic_app"
+    namespace = "com.asifbhimla.qalbcare"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
