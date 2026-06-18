@@ -81,13 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final now = DateTime.now();
     final next = state.nextPrayer(now: now);
-    final current = state.currentPrayer(now: now);
-    // Keep the current prayer on the tile until 30 minutes before the next
-    // prayer starts, then switch the tile to the next prayer. The ring timer
-    // always counts down to the next prayer.
-    final showNext = next.time.difference(now) <= const Duration(minutes: 30);
-    final tilePrayer = showNext ? next : current;
-    final tileLabel = showNext ? 'Next Prayer' : 'Current Prayer';
+    // The tile shows a prayer as "Current" from 30 minutes before it starts;
+    // Fajr's window ends at sunrise, after which Dhuhr shows as "Next".
+    // The ring timer always counts down to the next prayer.
+    final tile = state.homeTilePrayer(now: now);
+    final tilePrayer = tile.prayer;
+    final tileLabel = tile.isCurrent ? 'Current Prayer' : 'Next Prayer';
     final entries = state.prayerEntriesFor(now);
     final fajrTime = entries.firstWhere((e) => e.name == 'Fajr').time;
     final maghribTime = entries.firstWhere((e) => e.name == 'Maghrib').time;

@@ -79,6 +79,38 @@ void main() {
       expect(state.nextPrayer(now: now).name, 'Asr');
     });
 
+    test('home tile shows Fajr current pre-dawn, Dhuhr next after sunrise',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final times = state.prayerTimesFor(DateTime(2026, 6, 10));
+      final fajr = times.fajr.toLocal();
+      final sunrise = times.sunrise.toLocal();
+
+      // 20 minutes before Fajr: Fajr is the current prayer.
+      var tile =
+          state.homeTilePrayer(now: fajr.subtract(const Duration(minutes: 20)));
+      expect(tile.prayer.name, 'Fajr');
+      expect(tile.isCurrent, isTrue);
+
+      // Just after sunrise: tile flips to Dhuhr as the next prayer.
+      tile = state.homeTilePrayer(now: sunrise.add(const Duration(minutes: 5)));
+      expect(tile.prayer.name, 'Dhuhr');
+      expect(tile.isCurrent, isFalse);
+
+      // 20 minutes before Dhuhr: Dhuhr becomes the current prayer.
+      final dhuhr = state
+          .prayerEntriesFor(DateTime(2026, 6, 10))
+          .firstWhere((e) => e.name == 'Dhuhr')
+          .time;
+      tile = state
+          .homeTilePrayer(now: dhuhr.subtract(const Duration(minutes: 20)));
+      expect(tile.prayer.name, 'Dhuhr');
+      expect(tile.isCurrent, isTrue);
+    });
+
     test('Hanafi madhab gives a later Asr', () async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();
