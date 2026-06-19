@@ -34,12 +34,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ));
       return;
     }
-    await state.setLocation(
-      position.latitude,
-      position.longitude,
-      'Lat ${position.latitude.toStringAsFixed(3)}, '
-      'Lng ${position.longitude.toStringAsFixed(3)}',
-    );
+    final label = await LocationService.describeCoordinates(
+            position.latitude, position.longitude) ??
+        'Lat ${position.latitude.toStringAsFixed(3)}, '
+            'Lng ${position.longitude.toStringAsFixed(3)}';
+    if (!mounted) return;
+    await state.setLocation(position.latitude, position.longitude, label);
     await NotificationService.rescheduleAthanNotifications(state);
     messenger.showSnackBar(
         const SnackBar(content: Text('Location updated.')));

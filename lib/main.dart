@@ -43,10 +43,14 @@ Future<void> _autoDetectLocation(AppState appState) async {
   try {
     final position = await LocationService.getCurrentPosition();
     if (position == null) return; // permission denied / services off
+    final label =
+        await LocationService.describeCoordinates(
+                position.latitude, position.longitude) ??
+            'Current location';
     await appState.setLocation(
       position.latitude,
       position.longitude,
-      'Current location',
+      label,
       explicit: false,
     );
     await NotificationService.rescheduleAthanNotifications(appState);
