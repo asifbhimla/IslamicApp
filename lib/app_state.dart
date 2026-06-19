@@ -126,6 +126,10 @@ class AppState extends ChangeNotifier {
 
   String calculationMethodKey = 'muslimWorldLeague';
   Madhab madhab = Madhab.shafi;
+  // Custom Fajr/Isha twilight angles (degrees). Null means "use the selected
+  // calculation method's default angle".
+  double? fajrAngleOverride;
+  double? ishaAngleOverride;
   bool athanNotificationsEnabled = true;
   double quranArabicFontSize = 26;
   String secondaryTranslationKey = 'none';
@@ -183,6 +187,8 @@ class AppState extends ChangeNotifier {
     madhab = (prefs.getString('madhab') ?? 'shafi') == 'hanafi'
         ? Madhab.hanafi
         : Madhab.shafi;
+    fajrAngleOverride = prefs.getDouble('fajrAngleOverride');
+    ishaAngleOverride = prefs.getDouble('ishaAngleOverride');
     athanNotificationsEnabled =
         prefs.getBool('athanNotificationsEnabled') ?? true;
     quranArabicFontSize =
@@ -216,15 +222,47 @@ class AppState extends ChangeNotifier {
     await prefs.setString('apiPrimaryEdition', apiPrimaryEdition);
     await prefs.setString('apiSecondaryEdition', apiSecondaryEdition);
     await prefs.setString('regionKey', regionKey);
+    if (fajrAngleOverride != null) {
+      await prefs.setDouble('fajrAngleOverride', fajrAngleOverride!);
+    } else {
+      await prefs.remove('fajrAngleOverride');
+    }
+    if (ishaAngleOverride != null) {
+      await prefs.setDouble('ishaAngleOverride', ishaAngleOverride!);
+    } else {
+      await prefs.remove('ishaAngleOverride');
+    }
   }
 
   CalculationMethodOption get calculationMethod => calculationMethods
       .firstWhere((m) => m.key == calculationMethodKey,
           orElse: () => calculationMethods.first);
 
+  /// The calculation method's own (default) parameters, before any user angle
+  /// overrides are applied.
+  CalculationParameters get _methodParameters => calculationMethod.builder();
+
+  double get methodFajrAngle => _methodParameters.fajrAngle;
+  double get methodIshaAngle => _methodParameters.ishaAngle;
+  int get methodIshaInterval => _methodParameters.ishaInterval ?? 0;
+
+  /// The Fajr/Isha twilight angles actually in effect (user override if set,
+  /// otherwise the selected method's value).
+  double get effectiveFajrAngle => fajrAngleOverride ?? methodFajrAngle;
+  double get effectiveIshaAngle => ishaAngleOverride ?? methodIshaAngle;
+
   CalculationParameters get _parameters {
     final params = calculationMethod.builder();
     params.madhab = madhab;
+    if (fajrAngleOverride != null) {
+      params.fajrAngle = fajrAngleOverride!;
+    }
+    if (ishaAngleOverride != null) {
+      // An explicit Isha angle switches Isha to angle-based calculation even
+      // for methods that default to a fixed interval after Maghrib.
+      params.ishaAngle = ishaAngleOverride!;
+      params.ishaInterval = 0;
+    }
     return params;
   }
 
@@ -355,6 +393,23 @@ class AppState extends ChangeNotifier {
 
   Future<void> setCalculationMethod(String key) async {
     calculationMethodKey = key;
+    // Picking a method resets the angles to that method's defaults.
+    fajrAngleOverride = null;
+    ishaAngleOverride = null;
+    notifyListeners();
+    await _save();
+  }
+
+  /// Set a custom Fajr angle (degrees), or null to follow the method default.
+  Future<void> setFajrAngle(double? degrees) async {
+    fajrAngleOverride = degrees;
+    notifyListeners();
+    await _save();
+  }
+
+  /// Set a custom Isha angle (degrees), or null to follow the method default.
+  Future<void> setIshaAngle(double? degrees) async {
+    ishaAngleOverride = degrees;
     notifyListeners();
     await _save();
   }

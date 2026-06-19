@@ -149,6 +149,35 @@ void main() {
           'Dhuhr');
     });
 
+    test('custom Fajr angle shifts the Fajr time and can be reset', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final date = DateTime(2026, 6, 10);
+      final defaultFajr = state.prayerTimesFor(date).fajr;
+
+      // A smaller angle (sun nearer the horizon) makes Fajr later.
+      await state.setFajrAngle(12);
+      expect(state.effectiveFajrAngle, 12);
+      expect(state.prayerTimesFor(date).fajr.isAfter(defaultFajr), isTrue);
+
+      // Resetting follows the method default again.
+      await state.setFajrAngle(null);
+      expect(state.prayerTimesFor(date).fajr, defaultFajr);
+    });
+
+    test('changing the method resets custom angles to its defaults', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      await state.setFajrAngle(12);
+      await state.setCalculationMethod('northAmerica');
+      expect(state.fajrAngleOverride, isNull);
+      expect(state.effectiveFajrAngle, 15); // ISNA Fajr angle
+    });
+
     test('Hanafi madhab gives a later Asr', () async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();

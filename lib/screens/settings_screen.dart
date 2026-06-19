@@ -121,6 +121,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => _pickCalculationMethod(context, state),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.wb_twilight),
+                  title: const Text('Fajr angle'),
+                  subtitle: Text(_fajrAngleSubtitle(state)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _pickAngle(context, state, isFajr: true),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.nights_stay),
+                  title: const Text('Isha angle'),
+                  subtitle: Text(_ishaAngleSubtitle(state)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _pickAngle(context, state, isFajr: false),
+                ),
+                ListTile(
                   leading: const Icon(Icons.schedule),
                   title: const Text('Asr calculation (madhab)'),
                   subtitle: Text(
@@ -379,6 +393,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (madhab == null) return;
     await state.setMadhab(madhab);
+    await NotificationService.rescheduleAthanNotifications(state);
+  }
+
+  String _fajrAngleSubtitle(AppState state) {
+    final value = '${state.effectiveFajrAngle.toStringAsFixed(1)}°';
+    return state.fajrAngleOverride == null
+        ? '$value · method default'
+        : '$value · custom';
+  }
+
+  String _ishaAngleSubtitle(AppState state) {
+    if (state.ishaAngleOverride != null) {
+      return '${state.ishaAngleOverride!.toStringAsFixed(1)}° · custom';
+    }
+    if (state.methodIshaInterval > 0) {
+      return '${state.methodIshaInterval} min after Maghrib · method default';
+    }
+    return '${state.effectiveIshaAngle.toStringAsFixed(1)}° · method default';
+  }
+
+  Future<void> _pickAngle(BuildContext context, AppState state,
+      {required bool isFajr}) async {
+    var value =
+        (isFajr ? state.effectiveFajrAngle : state.effectiveIshaAngle)
+            .clamp(10.0, 21.0)
+            .toDouble();
+
+    final result = await showDialog<Object?>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            return AlertDialog(
+              title: Text(isFajr ? 'Fajr angle' : 'Isha angle'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${value.toStringAsFixed(1)}° below the horizon',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  Slider(
+                    min: 10,
+                    max: 21,
+                    divisions: 110,
+                    value: value,
+                    label: '${value.toStringAsFixed(1)}°',
+                    onChanged: (v) => setLocal(() => value = v),
+                  ),
+                  Text(
+                    'A larger angle starts ${isFajr ? 'Fajr' : 'Isha'} '
+                    'earlier; a smaller angle later.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop('default'),
+                  child: const Text('Use method default'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(value),
+                  child: const Text('Set'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+    final newAngle = result == 'default' ? null : result as double;
+    if (isFajr) {
+      await state.setFajrAngle(newAngle);
+    } else {
+      await state.setIshaAngle(newAngle);
+    }
     await NotificationService.rescheduleAthanNotifications(state);
   }
 }
