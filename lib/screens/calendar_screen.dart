@@ -41,11 +41,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final today = HijriCalendar.now();
     _hijriYear = today.hYear;
     _hijriMonth = today.hMonth;
+    _selectedDay = today.hDay;
   }
 
   void _changeMonth(int delta) {
     setState(() {
-      _selectedDay = null;
       _hijriMonth += delta;
       if (_hijriMonth > 12) {
         _hijriMonth = 1;
@@ -54,6 +54,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _hijriMonth = 12;
         _hijriYear--;
       }
+      // Pre-select today when viewing the current month, otherwise clear it.
+      final today = HijriCalendar.now();
+      _selectedDay =
+          (today.hYear == _hijriYear && today.hMonth == _hijriMonth)
+              ? today.hDay
+              : null;
     });
   }
 
