@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'app_state.dart';
 import 'screens/root_screen.dart';
+import 'services/location_service.dart';
 import 'services/notification_service.dart';
 
 Future<void> main() async {
@@ -18,6 +20,12 @@ Future<void> main() async {
       ? deviceLocale.languageCode
       : '${deviceLocale.languageCode}_${deviceLocale.countryCode}';
   await appState.load();
+
+  // Use the phone's current location as the default, unless the user has
+  // explicitly chosen one. Runs in the background so it never blocks startup;
+  // if permission is denied the existing saved/Makkah default is kept.
+  unawaited(_autoDetectLocation(appState));
+
   try {
     await NotificationService.init();
     await NotificationService.requestPermissions();
@@ -28,6 +36,23 @@ Future<void> main() async {
   }
 
   runApp(QalbCareApp(appState: appState));
+}
+
+Future<void> _autoDetectLocation(AppState appState) async {
+  if (appState.locationExplicitlySet) return;
+  try {
+    final position = await LocationService.getCurrentPosition();
+    if (position == null) return; // permission denied / services off
+    await appState.setLocation(
+      position.latitude,
+      position.longitude,
+      'Current location',
+      explicit: false,
+    );
+    await NotificationService.rescheduleAthanNotifications(appState);
+  } catch (_) {
+    // Keep the existing default on any failure.
+  }
 }
 
 class QalbCareApp extends StatelessWidget {

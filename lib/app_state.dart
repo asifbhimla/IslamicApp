@@ -119,6 +119,11 @@ class AppState extends ChangeNotifier {
   double longitude = 39.8262;
   String locationLabel = 'Makkah (default)';
 
+  /// True once the user has explicitly chosen a location (city picker or the
+  /// GPS button). Until then the app auto-detects the current location on
+  /// launch.
+  bool locationExplicitlySet = false;
+
   String calculationMethodKey = 'muslimWorldLeague';
   Madhab madhab = Madhab.shafi;
   bool athanNotificationsEnabled = true;
@@ -172,6 +177,7 @@ class AppState extends ChangeNotifier {
     latitude = prefs.getDouble('latitude') ?? latitude;
     longitude = prefs.getDouble('longitude') ?? longitude;
     locationLabel = prefs.getString('locationLabel') ?? locationLabel;
+    locationExplicitlySet = prefs.getBool('locationExplicitlySet') ?? false;
     calculationMethodKey =
         prefs.getString('calculationMethod') ?? calculationMethodKey;
     madhab = (prefs.getString('madhab') ?? 'shafi') == 'hanafi'
@@ -198,6 +204,7 @@ class AppState extends ChangeNotifier {
     await prefs.setDouble('latitude', latitude);
     await prefs.setDouble('longitude', longitude);
     await prefs.setString('locationLabel', locationLabel);
+    await prefs.setBool('locationExplicitlySet', locationExplicitlySet);
     await prefs.setString('calculationMethod', calculationMethodKey);
     await prefs.setString(
         'madhab', madhab == Madhab.hanafi ? 'hanafi' : 'shafi');
@@ -333,10 +340,15 @@ class AppState extends ChangeNotifier {
     return started?.name ?? 'Isha';
   }
 
-  Future<void> setLocation(double lat, double lng, String label) async {
+  /// Update the location. [explicit] marks a deliberate user choice (city
+  /// picker / GPS button), which stops the launch-time auto-detection from
+  /// overriding it on subsequent launches.
+  Future<void> setLocation(double lat, double lng, String label,
+      {bool explicit = true}) async {
     latitude = lat;
     longitude = lng;
     locationLabel = label;
+    if (explicit) locationExplicitlySet = true;
     notifyListeners();
     await _save();
   }
