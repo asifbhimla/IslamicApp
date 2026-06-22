@@ -1,0 +1,37 @@
+QALBCARE — Google Play Store Listing
+=====================================
+
+SHORT DESCRIPTION (80 chars):
+Prayer times, Quran reader, Qibla finder, Duas & Hijri calendar in one app.
+
+FULL DESCRIPTION:
+
+QalbCare is your daily Islamic companion — beautifully designed to help you stay connected to your faith throughout the day.
+
+ACCURATE PRAYER TIMES
+Get precise prayer times for Fajr, Dhuhr, Asr, Maghrib, and Isha based on your exact location. QalbCare supports multiple calculation methods including Muslim World League, ISNA, Egyptian Authority, Umm Al-Qura, and more. Fine-tune Fajr and Isha angles to match your local mosque. A live countdown ring on the home screen shows you exactly how much time remains until the next prayer.
+
+QURAN READER
+Browse all 114 surahs with Arabic text, English transliteration, and translation. Navigate by Surah or by Juz with traditional Juz names in both English and Arabic. Listen to recitation with verse-by-verse audio highlighting that follows along as you listen. Search by surah name or number to find any passage instantly.
+
+QIBLA FINDER
+A built-in compass points you toward the Kaaba in Makkah from anywhere in the world. The display turns green when you're aligned with the Qibla direction, so you always know you're facing the right way.
+
+DUAS COLLECTION
+Access a curated collection of authentic duas organized by category — morning and evening adhkar, prayers for travel, before meals, entering the mosque, and many more. Each dua includes Arabic text and English translation.
+
+ISLAMIC CALENDAR
+View the Hijri (Islamic) calendar alongside the Gregorian date. Browse months, tap any day to see details, and stay aware of important Islamic dates and events. Supports multiple regional formats and languages.
+
+SMART HOME SCREEN
+The home screen adapts throughout the day, showing you the current prayer in progress or the upcoming prayer with a visual countdown. During Ramadan, quickly see Suhur and Iftar times at a glance.
+
+ADDITIONAL FEATURES
+• Auto-detects your location for instant prayer times, or set your city manually
+• Daily Ayah — a verse from the Quran refreshed each day
+• Supports Shafi and Hanafi madhab for Asr calculation
+• Regional date and time formatting (18 locales supported)
+• Beautiful dark mode support
+• Completely free with no ads
+
+QalbCare — nurturing your heart's connection to faith, one prayer at a time.

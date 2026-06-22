@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7B5EA7"/>
+      <stop offset="50%" style="stop-color:#4A7BF7"/>
+      <stop offset="100%" style="stop-color:#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9B7EC8"/>
+      <stop offset="50%" style="stop-color:#6A9BFF"/>
+      <stop offset="100%" style="stop-color:#42F3FF"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#7B5EA7" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle with gradient -->
+  <circle cx="256" cy="256" r="240" fill="url(#grad)" filter="url(#shadow)"/>
+
+  <!-- Inner subtle ring -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+
+  <!-- Decorative crescent at top -->
+  <g transform="translate(256, 90)">
+    <circle cx="0" cy="0" r="28" fill="rgba(255,255,255,0.9)"/>
+    <circle cx="8" cy="-4" r="24" fill="url(#grad)"/>
+  </g>
+
+  <!-- Arabic text: قلب (Qalb = Heart) -->
+  <text x="256" y="290" text-anchor="middle" dominant-baseline="central"
+        font-family="'Geeza Pro', 'Al Nile', 'Arabic Typesetting', 'Traditional Arabic', 'Noto Naskh Arabic', serif"
+        font-size="180" font-weight="bold" fill="white" direction="rtl">قلب</text>
+
+  <!-- Subtle glow behind text -->
+  <text x="256" y="290" text-anchor="middle" dominant-baseline="central"
+        font-family="'Geeza Pro', 'Al Nile', 'Arabic Typesetting', 'Traditional Arabic', 'Noto Naskh Arabic', serif"
+        font-size="180" font-weight="bold" fill="rgba(255,255,255,0.2)" filter="url(#shadow)" direction="rtl">قلب</text>
+
+  <!-- "Care" subtitle -->
+  <text x="256" y="400" text-anchor="middle"
+        font-family="'Avenir Next', 'Helvetica Neue', 'Segoe UI', sans-serif"
+        font-size="52" font-weight="300" letter-spacing="12" fill="rgba(255,255,255,0.9)">CARE</text>
+
+  <!-- Small decorative line -->
+  <rect x="196" y="350" width="120" height="2" rx="1" fill="rgba(255,255,255,0.4)"/>
+</svg>

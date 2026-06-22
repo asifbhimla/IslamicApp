@@ -50,6 +50,134 @@ void main() {
       expect(next.time.isAfter(now), isTrue);
     });
 
+    test('Qibla direction from London points toward Makkah', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      state.latitude = 51.5074;
+      state.longitude = -0.1278;
+      final qibla = state.qiblaDirection;
+      // The Qibla from London is roughly 118-119 degrees from north.
+      expect(qibla, greaterThan(110));
+      expect(qibla, lessThan(130));
+    });
+
+    test('current prayer is the one in progress, distinct from next', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final entries = state
+          .prayerEntriesFor(DateTime(2026, 6, 10))
+          .where((e) => e.isObligatory)
+          .toList();
+      final dhuhr = entries.firstWhere((e) => e.name == 'Dhuhr').time;
+      final now = dhuhr.add(const Duration(minutes: 1));
+
+      expect(state.currentPrayer(now: now).name, 'Dhuhr');
+      expect(state.nextPrayer(now: now).name, 'Asr');
+    });
+
+    test('home tile follows the current/next 30-minute schedule', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final date = DateTime(2026, 6, 10);
+      final times = state.prayerTimesFor(date);
+      final fajr = times.fajr.toLocal();
+      final sunrise = times.sunrise.toLocal();
+      final entries =
+          state.prayerEntriesFor(date).where((e) => e.isObligatory).toList();
+      final dhuhr = entries.firstWhere((e) => e.name == 'Dhuhr').time;
+      final asr = entries.firstWhere((e) => e.name == 'Asr').time;
+
+      ({PrayerEntry prayer, bool isCurrent}) at(DateTime t) =>
+          state.homeTilePrayer(now: t);
+
+      // 20 min before Fajr -> Next : Fajr
+      var tile = at(fajr.subtract(const Duration(minutes: 20)));
+      expect(tile.prayer.name, 'Fajr');
+      expect(tile.isCurrent, isFalse);
+
+      // After Fajr, before sunrise -> Current : Fajr
+      tile = at(fajr.add(const Duration(minutes: 5)));
+      expect(tile.prayer.name, 'Fajr');
+      expect(tile.isCurrent, isTrue);
+
+      // After sunrise -> Next : Dhuhr
+      tile = at(sunrise.add(const Duration(minutes: 5)));
+      expect(tile.prayer.name, 'Dhuhr');
+      expect(tile.isCurrent, isFalse);
+
+      // After Dhuhr -> Current : Dhuhr
+      tile = at(dhuhr.add(const Duration(minutes: 5)));
+      expect(tile.prayer.name, 'Dhuhr');
+      expect(tile.isCurrent, isTrue);
+
+      // 20 min before Asr -> Next : Asr
+      tile = at(asr.subtract(const Duration(minutes: 20)));
+      expect(tile.prayer.name, 'Asr');
+      expect(tile.isCurrent, isFalse);
+    });
+
+    test('selected prayer chip tracks the current period, not the next', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final date = DateTime(2026, 6, 10);
+      final times = state.prayerTimesFor(date);
+      final fajr = times.fajr.toLocal();
+      final sunrise = times.sunrise.toLocal();
+      final entries =
+          state.prayerEntriesFor(date).where((e) => e.isObligatory).toList();
+      final dhuhr = entries.firstWhere((e) => e.name == 'Dhuhr').time;
+      final asr = entries.firstWhere((e) => e.name == 'Asr').time;
+
+      expect(state.selectedPrayerName(now: fajr.add(const Duration(minutes: 5))),
+          'Fajr');
+      expect(
+          state.selectedPrayerName(now: sunrise.add(const Duration(minutes: 5))),
+          'Sunrise');
+      expect(state.selectedPrayerName(now: dhuhr.add(const Duration(minutes: 5))),
+          'Dhuhr');
+      // 20 minutes before Asr the chip should still be Dhuhr (current period).
+      expect(
+          state.selectedPrayerName(now: asr.subtract(const Duration(minutes: 20))),
+          'Dhuhr');
+    });
+
+    test('custom Fajr angle shifts the Fajr time and can be reset', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      final date = DateTime(2026, 6, 10);
+      final defaultFajr = state.prayerTimesFor(date).fajr;
+
+      // A smaller angle (sun nearer the horizon) makes Fajr later.
+      await state.setFajrAngle(12);
+      expect(state.effectiveFajrAngle, 12);
+      expect(state.prayerTimesFor(date).fajr.isAfter(defaultFajr), isTrue);
+
+      // Resetting follows the method default again.
+      await state.setFajrAngle(null);
+      expect(state.prayerTimesFor(date).fajr, defaultFajr);
+    });
+
+    test('changing the method resets custom angles to its defaults', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await state.load();
+
+      await state.setFajrAngle(12);
+      await state.setCalculationMethod('northAmerica');
+      expect(state.fajrAngleOverride, isNull);
+      expect(state.effectiveFajrAngle, 15); // ISNA Fajr angle
+    });
+
     test('Hanafi madhab gives a later Asr', () async {
       SharedPreferences.setMockInitialValues({});
       final state = AppState();
@@ -75,6 +203,24 @@ void main() {
       await tester.pump();
       expect(find.text("Ya'sin"), findsOneWidget);
       expect(find.text('Al Fatiha'), findsNothing);
+    });
+
+    testWidgets('Quran screen Juz tab lists ajza by name', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState();
+      await tester.pumpWidget(_wrap(const QuranScreen(), state));
+
+      await tester.tap(find.text('Juz'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Alif Lam Meem'), findsOneWidget);
+      final juzScrollable = find.descendant(
+        of: find.byKey(const ValueKey('juzListView')),
+        matching: find.byType(Scrollable),
+      );
+      await tester.scrollUntilVisible(find.text("'Amma"), 300,
+          scrollable: juzScrollable);
+      expect(find.text("'Amma"), findsOneWidget);
     });
 
     testWidgets('Duas screen shows all categories', (tester) async {
