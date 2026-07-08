@@ -72,14 +72,13 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer> {
     });
     try {
       if (widget.verseNumber != null) {
-        await _player.setUrl(
-          quran.getAudioURLByVerse(
-              widget.surahNumber, widget.verseNumber!,
-              reciter: _reciter),
-        );
+        await _player
+            .setUrl(
+              quran.getAudioURLByVerse(widget.surahNumber, widget.verseNumber!,
+                  reciter: _reciter),
+            )
+            .timeout(const Duration(seconds: 15));
       } else {
-        // Play the surah as a playlist of per-verse clips so the currently
-        // sounding ayah can be tracked via the playlist index.
         final verseCount = quran.getVerseCount(widget.surahNumber);
         final sources = <AudioSource>[
           for (var v = 1; v <= verseCount; v++)
@@ -88,7 +87,9 @@ class _QuranAudioPlayerState extends State<QuranAudioPlayer> {
                   reciter: _reciter)),
             ),
         ];
-        await _player.setAudioSources(sources);
+        await _player
+            .setAudioSources(sources)
+            .timeout(const Duration(seconds: 15));
       }
       _player.play();
     } catch (e) {

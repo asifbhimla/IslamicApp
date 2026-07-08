@@ -23,13 +23,22 @@ class _QiblaScreenState extends State<QiblaScreen> {
   @override
   void initState() {
     super.initState();
-    final stream = FlutterCompass.events;
-    if (stream == null) {
+    try {
+      final stream = FlutterCompass.events;
+      if (stream == null) {
+        _compassUnavailable = true;
+      } else {
+        _sub = stream.listen(
+          (event) {
+            if (mounted) setState(() => _heading = event.heading);
+          },
+          onError: (_) {
+            if (mounted) setState(() => _compassUnavailable = true);
+          },
+        );
+      }
+    } catch (_) {
       _compassUnavailable = true;
-    } else {
-      _sub = stream.listen((event) {
-        if (mounted) setState(() => _heading = event.heading);
-      });
     }
   }
 

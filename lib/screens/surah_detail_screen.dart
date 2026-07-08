@@ -214,25 +214,29 @@ class _VerseRowState extends State<_VerseRow> {
     if (!state.useAlQuranCloudApi) return;
 
     setState(() => _apiFetching = true);
-    final primary = await AlQuranCloudService.fetchVerseTranslation(
-      widget.surahNumber,
-      widget.verseNumber,
-      state.apiPrimaryEdition,
-    );
-    String? secondary;
-    if (state.apiSecondaryEdition != 'none') {
-      secondary = await AlQuranCloudService.fetchVerseTranslation(
+    try {
+      final primary = await AlQuranCloudService.fetchVerseTranslation(
         widget.surahNumber,
         widget.verseNumber,
-        state.apiSecondaryEdition,
-      );
-    }
-    if (mounted) {
-      setState(() {
-        _apiTranslation = primary;
-        _apiSecondaryTranslation = secondary;
-        _apiFetching = false;
-      });
+        state.apiPrimaryEdition,
+      ).timeout(const Duration(seconds: 8), onTimeout: () => null);
+      String? secondary;
+      if (state.apiSecondaryEdition != 'none') {
+        secondary = await AlQuranCloudService.fetchVerseTranslation(
+          widget.surahNumber,
+          widget.verseNumber,
+          state.apiSecondaryEdition,
+        ).timeout(const Duration(seconds: 8), onTimeout: () => null);
+      }
+      if (mounted) {
+        setState(() {
+          _apiTranslation = primary;
+          _apiSecondaryTranslation = secondary;
+          _apiFetching = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _apiFetching = false);
     }
   }
 
@@ -254,7 +258,7 @@ class _VerseRowState extends State<_VerseRow> {
       _versePlayer ??= AudioPlayer();
       final url = quran.getAudioURLByVerse(
           widget.surahNumber, widget.verseNumber);
-      await _versePlayer!.setUrl(url);
+      await _versePlayer!.setUrl(url).timeout(const Duration(seconds: 10));
       setState(() {
         _playing = true;
         _loading = false;
@@ -262,7 +266,9 @@ class _VerseRowState extends State<_VerseRow> {
       await _versePlayer!.play();
       if (mounted) setState(() => _playing = false);
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
