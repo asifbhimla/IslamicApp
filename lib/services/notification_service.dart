@@ -14,7 +14,40 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  static const NotificationDetails _athanDetails = NotificationDetails(
+  // Base name of the bundled Athan audio.
+  //  • Android: android/app/src/main/res/raw/athan.mp3  (referenced by name)
+  //  • iOS:     add athan.aiff to the Runner target in Xcode
+  // If the file is missing the OS quietly falls back to the default sound, so
+  // the app still builds and runs without it.
+  static const _androidAthanSound =
+      RawResourceAndroidNotificationSound('athan');
+  static const _iosAthanSound = 'athan.aiff';
+
+  // Notification with the full Athan recitation. Android binds a channel's
+  // sound at creation time, so this uses a distinct channel id from the
+  // default-sound one below to guarantee the custom sound takes effect.
+  static const NotificationDetails _athanSoundDetails = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'athan_channel_sound',
+      'Athan (with sound)',
+      channelDescription: 'Prayer time notifications with the Athan recitation',
+      importance: Importance.max,
+      priority: Priority.high,
+      category: AndroidNotificationCategory.alarm,
+      playSound: true,
+      sound: _androidAthanSound,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+    ),
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+      presentBadge: false,
+      sound: _iosAthanSound,
+    ),
+  );
+
+  // Notification with the default system sound (Athan sound turned off).
+  static const NotificationDetails _defaultSoundDetails = NotificationDetails(
     android: AndroidNotificationDetails(
       'athan_channel',
       'Athan',
@@ -66,6 +99,9 @@ class NotificationService {
     await _plugin.cancelAll();
     if (!state.athanNotificationsEnabled) return;
 
+    final details =
+        state.athanSoundEnabled ? _athanSoundDetails : _defaultSoundDetails;
+
     final now = DateTime.now();
     var id = 0;
     for (var dayOffset = 0; dayOffset < 2; dayOffset++) {
@@ -80,7 +116,7 @@ class NotificationService {
             title: '${entry.name} prayer time',
             body: "QalbCare: It's time for ${entry.name} in ${state.locationLabel}",
             scheduledDate: tz.TZDateTime.from(entry.time, tz.local),
-            notificationDetails: _athanDetails,
+            notificationDetails: details,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           );
         } on UnimplementedError {

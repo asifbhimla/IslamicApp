@@ -131,6 +131,9 @@ class AppState extends ChangeNotifier {
   double? fajrAngleOverride;
   double? ishaAngleOverride;
   bool athanNotificationsEnabled = true;
+  // When true, the prayer notification plays the bundled Athan recitation;
+  // when false it uses the default system notification sound.
+  bool athanSoundEnabled = true;
   double quranArabicFontSize = 26;
   String secondaryTranslationKey = 'none';
   bool useAlQuranCloudApi = false;
@@ -191,6 +194,7 @@ class AppState extends ChangeNotifier {
     ishaAngleOverride = prefs.getDouble('ishaAngleOverride');
     athanNotificationsEnabled =
         prefs.getBool('athanNotificationsEnabled') ?? true;
+    athanSoundEnabled = prefs.getBool('athanSoundEnabled') ?? true;
     quranArabicFontSize =
         prefs.getDouble('quranArabicFontSize') ?? quranArabicFontSize;
     secondaryTranslationKey =
@@ -216,6 +220,7 @@ class AppState extends ChangeNotifier {
         'madhab', madhab == Madhab.hanafi ? 'hanafi' : 'shafi');
     await prefs.setBool(
         'athanNotificationsEnabled', athanNotificationsEnabled);
+    await prefs.setBool('athanSoundEnabled', athanSoundEnabled);
     await prefs.setDouble('quranArabicFontSize', quranArabicFontSize);
     await prefs.setString('secondaryTranslation', secondaryTranslationKey);
     await prefs.setBool('useAlQuranCloudApi', useAlQuranCloudApi);
@@ -422,6 +427,12 @@ class AppState extends ChangeNotifier {
 
   Future<void> setAthanNotificationsEnabled(bool value) async {
     athanNotificationsEnabled = value;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setAthanSoundEnabled(bool value) async {
+    athanSoundEnabled = value;
     notifyListeners();
     await _save();
   }

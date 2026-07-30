@@ -152,6 +152,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     await NotificationService.rescheduleAthanNotifications(state);
                   },
                 ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.volume_up),
+                  title: const Text('Play Athan sound'),
+                  subtitle: Text(state.athanSoundEnabled
+                      ? 'Plays the Athan recitation'
+                      : 'Uses the default notification sound'),
+                  value: state.athanSoundEnabled,
+                  onChanged: state.athanNotificationsEnabled
+                      ? (value) async {
+                          await state.setAthanSoundEnabled(value);
+                          await NotificationService
+                              .rescheduleAthanNotifications(state);
+                        }
+                      : null,
+                ),
               ],
             ),
           ),
